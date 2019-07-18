@@ -1,13 +1,7 @@
 package fr.insee.semweb.bpe;
 
-import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -25,11 +19,8 @@ import org.apache.jena.vocabulary.XSD;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.epam.parso.CSVDataWriter;
 import com.epam.parso.Column;
-import com.epam.parso.SasFileProperties;
 import com.epam.parso.SasFileReader;
-import com.epam.parso.impl.CSVDataWriterImpl;
 import com.epam.parso.impl.SasFileReaderImpl;
 
 import fr.insee.semweb.bpe.Configuration.Domain;
@@ -189,31 +180,5 @@ public class SASModelMaker {
 		}
 
 		return qualityModel;
-	}
-	/**
-	 * Utility function to export the SAS file as CSV.
-	 * 
-	 * @throws IOException In case of problem reading SAS file or writing CSV file.
-	 */
-	public static void convertToCSV() throws IOException {
-
-		final String CSV_FILE_NAME = "src/main/resources/data/bpe.csv";
-
-		InputStream sasStream = new FileInputStream(Configuration.getSASDataFilePath().toString());
-		SasFileReader sasFileReader = new SasFileReaderImpl(sasStream);
-
-		SasFileProperties sasFileProperties = sasFileReader.getSasFileProperties();
-		long rowCount = sasFileProperties.getRowCount();
-		logger.info("Number of lines in dataset: " + rowCount);
-		logger.info("Character set: " + sasFileProperties.getEncoding());
-
-		Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(CSV_FILE_NAME)), "UTF-8"));
-		CSVDataWriter csvDataWriter = new CSVDataWriterImpl(writer);
-		csvDataWriter.writeColumnNames(sasFileReader.getColumns());
-		int linesToRead = (int) Math.min(rowCount, LINES_TO_READ);
-		for (int i = 0; i < linesToRead; i++) {
-			csvDataWriter.writeRow(sasFileReader.getColumns(), sasFileReader.readNext());			
-		}
-		writer.close();
 	}
 }
