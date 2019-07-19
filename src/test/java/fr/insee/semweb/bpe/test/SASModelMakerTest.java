@@ -17,6 +17,14 @@ public class SASModelMakerTest {
 	}
 
 	@Test
+	public void testMakeBPEModelFilter() throws Exception {
+
+		String filter = "D2";
+		Model equipments = SASModelMaker.makeBPEModel(type -> type.startsWith(filter));
+		equipments.write(new FileWriter("src/main/resources/data/equipments-" + filter.toLowerCase() + ".ttl"), "TTL");
+	}
+
+	@Test
 	public void testMakeQualityModel() throws Exception {
 
 		Model quality = SASModelMaker.makeQualityModel();

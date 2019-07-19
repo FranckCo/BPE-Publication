@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
@@ -39,9 +40,9 @@ public class SASModelMaker {
 
 	final static Long LINES_TO_READ = 0L; // Zero means read all lines
 	final static int LOGGING_STEP = 10000;
-	final static String filter = "E102"; // Will only produce equipment whose type starts with the filter (set to empty for all equipments)
+	final static String DEFAULT_FILTER = "E102"; // Will only produce equipment whose type starts with the filter (set to empty for all equipments)
 
-	public static Model makeBPEModel() throws IOException {
+	public static Model makeBPEModel(Predicate<String> typeFilter) throws IOException {
 
 		SasFileReader sasFileReader = new SasFileReaderImpl(new FileInputStream(Configuration.getSASDataFilePath().toString()));
 		// Build the map of column indexes
@@ -72,8 +73,8 @@ public class SASModelMaker {
 			String equipmentId = values[colIndexes.get("idetab")].toString().trim() + values[colIndexes.get("idservice")].toString().trim();
 			// Create equipment resource with relevant types
 			String equipmentType = values[colIndexes.get("typequ")].toString().trim();
-			// Test conformance to filter
-			if (!equipmentType.startsWith(filter)) continue;
+			// Test conformance of equipment type to filter predicate
+			if (!typeFilter.test(equipmentType)) continue;
 
 			Resource equipmentResource = bpeModel.createResource(Configuration.inseeEquipmentURI(String.valueOf(equipmentId)), BPEOnto.Equipement);
 			equipmentResource.addProperty(DCTerms.type, bpeModel.createResource(Configuration.inseeEquipmentTypeURI(equipmentType)));
@@ -131,8 +132,13 @@ public class SASModelMaker {
 			;
 			if (++equipmentCreated % LOGGING_STEP == 1) logger.debug("Just created equipment number " + equipmentCreated);
 		}
-		logger.info(equipmentCreated + " created");
+		logger.info(equipmentCreated + " equipments created, the model contains " + bpeModel.size() + " triples");
 		return bpeModel;
+	}
+
+	public static Model makeBPEModel() throws IOException {
+
+		return makeBPEModel(type -> type.startsWith(DEFAULT_FILTER));
 	}
 
 	// See https://www.w3.org/TR/vocab-dqv/#expressQualityClassification
