@@ -276,7 +276,7 @@ public class CodelistModelMaker {
 
 		Map<String, String> equipmentTypes = new HashMap<String, String>();
 
-		Path codelistFilePath = Configuration.getTypesCodelistFilePath(Domain.ENSEMBLE);
+		Path codelistFilePath = Configuration.getBDFTypesCodelistFilePath(Domain.ENSEMBLE);
 		DbfRecord record = null;
 		try {
 			InputStream dbf = new FileInputStream(codelistFilePath.toString());

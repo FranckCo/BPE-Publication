@@ -1,0 +1,8 @@
+CANT	ENSEIGNEMENT	Cantine
+CL_PELEM	ENSEIGNEMENT	Classe pré-élémentaire dans une école élémentaire
+CL_PGE	ENSEIGNEMENT	Classe préparatoire aux grandes écoles
+EP	ENSEIGNEMENT	Appartenance à un dispositif d'éducation prioritaire
+INT	ENSEIGNEMENT	Internat
+RPIC	ENSEIGNEMENT	Regroupement pédagogique intégré
+COUVERT	SPORT_LOISIR	Au moins une partie couverte
+ECLAIRE	SPORT_LOISIR	Au moins une partie éclairée

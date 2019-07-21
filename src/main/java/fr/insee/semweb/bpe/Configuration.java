@@ -21,52 +21,68 @@ public class Configuration {
 	public static final boolean CREATE_GEOMETRY = true; // Create GeoSPARQL Geometry resources
 	public static final boolean QUALITY_ANNOTATIONS = true; // Create DQV quality annotations
 
-	// Input files
-	public static final Path RESOURCE_PATH = Paths.get("src/main/resources/data");
+	/** Input data will be read in this folder, and all files created will be put here */
+	public static final Path DATA_RESOURCE_PATH = Paths.get("src/main/resources/data");
+	/** Text configuration files (lists of features, equipment lists...) should be in this folder */
+	public static final Path CONF_RESOURCE_PATH = Paths.get("src/main/resources/conf");
 
+	
+	/** Mappings between feature markers and OWL properties */
 	public static Map<String, OntProperty> featurePresence = new HashMap<String, OntProperty>();
 	static {
 		Configuration.featurePresence.put("0", BPEOnto.caractereAbsent);
 		Configuration.featurePresence.put("1", BPEOnto.caracterePresent);
 	}
 
-	public static Map<Path, Boolean> getDBFFilePaths(Domain domain) {
-	
-		Map<Path, Boolean> paths = new HashMap<Path, Boolean>();
-		paths.put(RESOURCE_PATH.resolve("bpe_" + domain + "_xy.dbf"), true); // sampled
-		paths.put(RESOURCE_PATH.resolve("varlist_" + domain + "_xy.dbf"), false);
-		paths.put(RESOURCE_PATH.resolve("varmod_" + domain + "_xy.dbf"), false);
-	
-		return paths;
-	}
-
-	/** Path of the dBase file containing the equipment types for a given domain */
-	public static Path getTypesCodelistFilePath(Domain domain) {
-		return RESOURCE_PATH.resolve("varmod_" + domain.toString() + "_xy.dbf");
-	}
+	// Configuration files
 
 	/** Path of the TSV file containing the equipment types for a given domain */
 	public static Path getTypesCodelistTSVFilePath() {
 		// Basically copied with edits from https://www.insee.fr/fr/statistiques/fichier/3568629/Contenu_bpe18_ensemble.pdf
-		return RESOURCE_PATH.resolve("bpe-teq2018.tsv");
+		return CONF_RESOURCE_PATH.resolve("bpe-teq2018.tsv");
 	}
 
-	/** Path of the file containing the equipment features (for all domains) */
+	/** Path of the TSV file containing the equipment features (for all domains) */
 	public static Path getFeaturesCodelistFilePath() {
-		return RESOURCE_PATH.resolve("features.tsv");
+		return CONF_RESOURCE_PATH.resolve("features.tsv");
 	}
 
-	/** Path of the SAS file containing the equipment list */
-	public static Path getSASDataFilePath() {
-		return RESOURCE_PATH.resolve("detail_diffxy_internet.sas7bdat");
+	/** Path of the TSV file containing the links between equipment types and features or properties */
+	public static Path getFeaturesByTypesFilePath() {
+		return CONF_RESOURCE_PATH.resolve("features.tsv");
 	}
 
-	/** Path of the DBF file containing the equipment list for a given domain */
+	// dBase files
+
+	/** Returns the paths of the dBase files (data and configuration) for a given domain */
+	public static Map<Path, Boolean> getDBFFilePaths(Domain domain) {
+
+		Map<Path, Boolean> paths = new HashMap<Path, Boolean>();
+		paths.put(DATA_RESOURCE_PATH.resolve("bpe_" + domain + "_xy.dbf"), true); // sampled
+		paths.put(DATA_RESOURCE_PATH.resolve("varlist_" + domain + "_xy.dbf"), false);
+		paths.put(DATA_RESOURCE_PATH.resolve("varmod_" + domain + "_xy.dbf"), false);
+
+		return paths;
+	}
+
+	/** Path of the dBase file containing the equipment types for a given domain */
+	public static Path getBDFTypesCodelistFilePath(Domain domain) {
+		return DATA_RESOURCE_PATH.resolve("varmod_" + domain.toString() + "_xy.dbf");
+	}
+
+	/** Path of the dBase file containing the equipment list for a given domain */
 	public static Path getDBFDataFilePath(Domain domain) {
-		return RESOURCE_PATH.resolve("bpe_" + domain.toString() + "_xy.dbf");
+		return DATA_RESOURCE_PATH.resolve("bpe_" + domain.toString() + "_xy.dbf");
 	}
 
-	// Variable names are different in the SAS and DBF files, so for now we hard-code the feature lists.
+	// SAS files
+
+	/** Path of the SAS file containing the data */
+	public static Path getSASDataFilePath() {
+		return DATA_RESOURCE_PATH.resolve("detail_diffxy_internet.sas7bdat");
+	}
+
+	/** Names of the SAS variables corresponding to the main features in the different domains */
 	static Map<Domain, List<String>> sasFeatures = new HashMap<Domain, List<String>>();
 	static {
 		sasFeatures.put(Domain.ENSEIGNEMENT, Arrays.asList("cantine", "internat", "rpic", "cl_pelem", "cl_pge", "ep"));
@@ -74,14 +90,13 @@ public class Configuration {
 		sasFeatures.put(Domain.ENSEMBLE, new ArrayList<String>());
 	}
 
+	// Naming
+
 	/** (Dereferenceable) URIs for coordinate systems (see http://www.epsg-registry.org/) */
 	public static String LAMBERT_93_URI = "http://www.opengis.net/def/crs/EPSG/0/2154"; // See also https://epsg.io/2154
 
-	/** RDF data type for the WKT literal */
-	public static RDFDatatype WKT_DATA_TYPE = new BaseDatatype("http://www.opengis.net/ont/geosparql#wktLiteral");
-	
 	// Constants for naming
-	/** Base URI for equipements */
+	/** Base URI for equipments */
 	public static String INSEE_EQUIPMENT_BASE_URI = "http://id.insee.fr/territoire/equipement/";
 	/** Base URI for Insee codes */
 	public static String INSEE_CODES_BASE_URI = "http://id.insee.fr/codes/";
@@ -120,7 +135,7 @@ public class Configuration {
 	}
 	/** URI for a municipality ('commune') */
 	public static String inseeMunicipalityURI(String municipalityCode) {
-		return "http://id.insee.fr/geo/commune/" + municipalityCode; // TODO Should it be the URI of the 2017 code?
+		return "http://id.insee.fr/geo/commune/" + municipalityCode;
 	}
 	/** URI for a quality level */
 	public static String inseeQualityLevelURI(String levelCode) {
@@ -136,7 +151,7 @@ public class Configuration {
 		else return inseeEquipmentURI(equipmentCode) + "/qualiteGeometrie";
 	}
 
-	/** HACK There is a case of EM character in the main code list (should be a quote), and trailing spaces */
+	/** HACK There is a case of EM character in the main dBase code list (should be a quote), and trailing spaces */
 	public static String normalizeString(String input) {
 
 		if (input == null) return null;
@@ -145,20 +160,23 @@ public class Configuration {
 		return input.replace(ascii0x19, ascii0x27).trim();
 	}
 
-	/** Checks if an equipement is of type 'enseignement' */
+	/** Checks if an equipment is of type 'enseignement' */
 	public static boolean isEducation(String equipmentType) {
 		return ((equipmentType != null) && (equipmentType.startsWith("C")));
 	}
 
-	/** Checks if an equipement is of type 'sport-loisir' */
+	/** Checks if an equipment is of type 'sport-loisir' */
 	public static boolean isSportLeisure(String equipmentType) {
 		return ((equipmentType != null) && (equipmentType.startsWith("F")));
 	}
 
-	/** Checks if an equipement is of specific type ('enseignement' or 'sport-loisir') */
+	/** Checks if an equipment is of specific type ('enseignement' or 'sport-loisir') */
 	public static boolean isSpecific(String equipmentType) {
 		return ((equipmentType != null) && (equipmentType.startsWith("C") || equipmentType.startsWith("F")));
 	}
+
+	/** RDF data type for the WKT literal */
+	public static RDFDatatype WKT_DATA_TYPE = new BaseDatatype("http://www.opengis.net/ont/geosparql#wktLiteral");
 
 	/** 
 	 * Return the value of the WKT literal representing a point in a given coordinate system.
@@ -169,7 +187,7 @@ public class Configuration {
 		return "<" + crs + "> Point(" + x + " " + y + ")";
 	}
 
-	/** Returns the domain of an equipement type */
+	/** Returns the domain of an equipment type */
 	public static Domain getDomain(String equipmentType) {
 		if (equipmentType == null) return null;
 		if (equipmentType.startsWith("C")) return Domain.ENSEIGNEMENT;
@@ -177,8 +195,9 @@ public class Configuration {
 		return Domain.ENSEMBLE;
 	}
 
+	/** Enumeration of high-level domains */
 	public enum Domain {
-		
+
 	    ENSEMBLE("ensemble"),
 	    ENSEIGNEMENT("enseignement"),
 	    SPORT_LOISIR("sport_loisir");
@@ -198,6 +217,7 @@ public class Configuration {
 	    }
 	}
 
+	/** Enumeration of quality levels */
 	public enum QualityLevel {
 		
 	    BONNE("Bonne", "BON"),
