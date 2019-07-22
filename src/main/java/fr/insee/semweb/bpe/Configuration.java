@@ -39,17 +39,17 @@ public class Configuration {
 	/** Path of the TSV file containing the equipment types for a given domain */
 	public static Path getTypesCodelistTSVFilePath() {
 		// Basically copied with edits from https://www.insee.fr/fr/statistiques/fichier/3568629/Contenu_bpe18_ensemble.pdf
-		return CONF_RESOURCE_PATH.resolve("bpe-teq2018.tsv");
+		return CONF_RESOURCE_PATH.resolve("bpe2018-types.tsv");
 	}
 
 	/** Path of the TSV file containing the equipment features (for all domains) */
 	public static Path getFeaturesCodelistFilePath() {
-		return CONF_RESOURCE_PATH.resolve("features.tsv");
+		return CONF_RESOURCE_PATH.resolve("bpe2018-features.tsv");
 	}
 
 	/** Path of the TSV file containing the links between equipment types and features or properties */
 	public static Path getFeaturesByTypesFilePath() {
-		return CONF_RESOURCE_PATH.resolve("types-features.tsv");
+		return CONF_RESOURCE_PATH.resolve("bpe2018-types-features.tsv");
 	}
 
 	// dBase files
@@ -94,6 +94,9 @@ public class Configuration {
 
 	/** (Dereferenceable) URIs for coordinate systems (see http://www.epsg-registry.org/) */
 	public static String LAMBERT_93_URI = "http://www.opengis.net/def/crs/EPSG/0/2154"; // See also https://epsg.io/2154
+	public static String UTM40S_URI = "http://www.opengis.net/def/crs/EPSG/0/32740"; // UTM40S (https://epsg.io/32740) for the Réunion island
+	public static String UTM20N_URI = "http://www.opengis.net/def/crs/EPSG/0/32620"; // UTM20N (https://epsg.io/32620) for the Martinique and Guadeloupe islands
+	public static String UTM22N_URI = "http://www.opengis.net/def/crs/EPSG/0/2972"; // UTM22N (https://epsg.io/2972) for the Guyane
 
 	// Constants for naming
 	/** Base URI for equipments */
@@ -131,6 +134,7 @@ public class Configuration {
 	}
 	/** URI for an education sector */
 	public static String inseeSectorURI(String sectorCode) {
+		if (!(("PU".equals(sectorCode)) || ("PR".equals(sectorCode)))) return null;
 		return INSEE_CODES_BASE_URI + "territoire/secteur/" + sectorCode;
 	}
 	/** URI for a municipality ('commune') */
@@ -179,11 +183,18 @@ public class Configuration {
 	public static RDFDatatype WKT_DATA_TYPE = new BaseDatatype("http://www.opengis.net/ont/geosparql#wktLiteral");
 
 	/** 
-	 * Return the value of the WKT literal representing a point in a given coordinate system.
+	 * Return the value of the WKT literal representing a point in a given municipality.
 	 * 
 	 * See example at https://www.w3.org/2015/spatial/wiki/Coordinate_Reference_Systems.
 	 */
-	public static String getPointWKTLiteral(double x, double y, String crs) {
+	public static String getPointWKTLiteral(double x, double y, String municipalityCode) {
+		String crs = LAMBERT_93_URI; // Majority of cases
+		if (municipalityCode.startsWith("97")) { // There are some equipments in Mayotte, but they are not geolocalized
+			if (municipalityCode.startsWith("971")) crs = UTM20N_URI;
+			else if (municipalityCode.startsWith("972")) crs = UTM20N_URI;
+			else if (municipalityCode.startsWith("973")) crs = UTM22N_URI;
+			else if (municipalityCode.startsWith("974")) crs = UTM40S_URI;
+		}
 		return "<" + crs + "> Point(" + x + " " + y + ")";
 	}
 

@@ -67,6 +67,11 @@ public class SASUtils {
 		return featuresAndProperties;
 	}
 
+	/**
+	 * Checks that the values of columns for expected features and properties are not null.
+	 * 
+	 * @throws IOException In case of problem reading the database.
+	 */
 	public static void checkFeaturesAndProperties() throws IOException {
 
 		SortedMap<String, SortedSet<String>> featuresAndPropertiesByType = listFeaturesAndPropertiesByType();
@@ -81,7 +86,7 @@ public class SASUtils {
 			Object[] values = sasFileReader.readNext();
 			// Equipment identifier is first column + second column
 			String equipmentId = values[colIndexes.get("idetab")].toString().trim() + values[colIndexes.get("idservice")].toString().trim();
-			// Create equipment resource with relevant types
+			// Read equipment type
 			String equipmentType = values[colIndexes.get("typequ")].toString().trim();
 			// Expected features and properties for this type of equipment
 			if (featuresAndPropertiesByType.containsKey(equipmentType)) {
@@ -113,6 +118,43 @@ public class SASUtils {
 	}
 
 	/**
+	 * Checks the values of the municipality codes (especially overseas).
+	 * 
+	 * @throws IOException In case of problem reading the database.
+	 */
+	public static void checkMunicipalityCodes() throws IOException {
+
+		SasFileReader sasFileReader = new SasFileReaderImpl(new FileInputStream(Configuration.getSASDataFilePath().toString()));
+		// Build the map of column indexes
+		Map<String, Integer> colIndexes = new HashMap<String, Integer>();
+		int index = 0;
+		for (Column column : sasFileReader.getColumns()) colIndexes.put(column.getName().toLowerCase(), index++);
+		long linesToRead = sasFileReader.getSasFileProperties().getRowCount();
+		for (long line = 0; line < linesToRead; line++) {
+			Object[] values = sasFileReader.readNext();
+			// Equipment identifier is first column + second column
+			String equipmentId = values[colIndexes.get("idetab")].toString().trim() + values[colIndexes.get("idservice")].toString().trim();
+			// Read equipment type
+			String equipmentType = values[colIndexes.get("typequ")].toString().trim();
+			// Municipality code
+			String municipalityCode = values[colIndexes.get("depcom")].toString().trim();
+			if ((municipalityCode == null) || (municipalityCode.length() != 5)) System.out.println("Invalid municipality code " + municipalityCode + " for equipment " + equipmentId + " of type " + equipmentType);
+			else {
+				if (municipalityCode.startsWith("97")) {
+					if ("1234".indexOf(municipalityCode.charAt(2)) < 0) {
+						// There are actually some equipments from Mayotte, let us check they are not geolocalized
+						if (municipalityCode.startsWith("976")) {
+							Object xLambert = values[colIndexes.get("lambert_x")];
+							Object yLambert = values[colIndexes.get("lambert_y")];
+							if ((xLambert != null) && (yLambert != null)) System.out.println("Equipment " + equipmentId + " of type " + equipmentType + " in Mayotte has coordinates");
+						} else System.out.println("Invalid municipality code " + municipalityCode + " for equipment " + equipmentId + " of type " + equipmentType);
+					}
+				}
+			}
+		}
+	}
+
+	/**
 	 * Returns the number of equipments of each type.
 	 * 
 	 * @return A map indexed by equipment types, each value being the number of equipments of this type.
@@ -131,7 +173,6 @@ public class SASUtils {
 		long linesToRead = sasFileReader.getSasFileProperties().getRowCount();
 		logger.debug("There are " + linesToRead + " lines in " + Configuration.getSASDataFilePath().toString());
 		for (long line = 0; line < linesToRead; line++) {
-
 			Object[] values = sasFileReader.readNext();
 			// Equipment identifier is first column + second column
 			String equipmentType = values[colIndexes.get("typequ")].toString().trim();

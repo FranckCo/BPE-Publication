@@ -49,6 +49,7 @@ public class BPEOnto {
 	// BPE data properties
 	public static final DatatypeProperty anneeDescription = model.createDatatypeProperty(uri + "anneeDescription");
 	public static final DatatypeProperty capacite = model.createDatatypeProperty(uri + "capacite");
+	public static final DatatypeProperty nombreSalles = model.createDatatypeProperty(uri + "nombreSalles");
 	// BPE object properties
 	public static final ObjectProperty caractereAbsent = model.createObjectProperty(uri + "caractereAbsent");
 	public static final ObjectProperty caractereApplicable = model.createObjectProperty(uri + "caractereApplicable");

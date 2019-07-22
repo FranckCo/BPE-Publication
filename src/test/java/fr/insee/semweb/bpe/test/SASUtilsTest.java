@@ -40,6 +40,11 @@ public class SASUtilsTest {
 	}
 
 	@Test
+	public void testCheckMunicipalityCodes() throws IOException {
+		SASUtils.checkMunicipalityCodes();
+	}
+
+	@Test
 	public void testListColumns() throws IOException {
 
 		Map<Integer, Column> columns = SASUtils.listColumns();

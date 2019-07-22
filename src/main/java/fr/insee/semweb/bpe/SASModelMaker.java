@@ -6,6 +6,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.function.Predicate;
 
 import org.apache.jena.datatypes.xsd.XSDDatatype;
@@ -42,6 +44,13 @@ public class SASModelMaker {
 	final static int LOGGING_STEP = 10000; // Should be strictly positive
 	final static String DEFAULT_FILTER = "E102"; // Will only produce equipment whose type starts with the filter (set to empty for all equipments)
 
+	/**
+	 * Creates the BPE model with a custom filter on the type of equipments.
+	 * 
+	 * @param typeFilter The filter as a predicate on the equipment type code.
+	 * @return The BPE extract as a Jena model.
+	 * @throws IOException In case of problem reading the database.
+	 */
 	public static Model makeBPEModel(Predicate<String> typeFilter) throws IOException {
 
 		SasFileReader sasFileReader = new SasFileReaderImpl(new FileInputStream(Configuration.getSASDataFilePath().toString()));
@@ -49,6 +58,9 @@ public class SASModelMaker {
 		Map<String, Integer> colIndexes = new HashMap<String, Integer>();
 		int index = 0;
 		for (Column column : sasFileReader.getColumns()) colIndexes.put(column.getName().toLowerCase(), index++);
+
+		// Read the list of columns to process for each type of equipment
+		SortedMap<String, SortedSet<String>> featuresAndPropertiesByType = SASUtils.listFeaturesAndPropertiesByType();
 
 		Model bpeModel = ModelFactory.createDefaultModel();
 		bpeModel.setNsPrefix("dcterms", DCTerms.getURI());
@@ -71,11 +83,11 @@ public class SASModelMaker {
 			Object[] values = sasFileReader.readNext();
 			// Equipment identifier is first column + second column
 			String equipmentId = values[colIndexes.get("idetab")].toString().trim() + values[colIndexes.get("idservice")].toString().trim();
-			// Create equipment resource with relevant types
+			// Read equipment type and test conformance to filter predicate
 			String equipmentType = values[colIndexes.get("typequ")].toString().trim();
-			// Test conformance of equipment type to filter predicate
 			if (!typeFilter.test(equipmentType)) continue;
  
+			// Create equipment resource with relevant types
 			Resource equipmentResource = bpeModel.createResource(Configuration.inseeEquipmentURI(String.valueOf(equipmentId)), BPEOnto.Equipement);
 			equipmentResource.addProperty(DCTerms.type, bpeModel.createResource(Configuration.inseeEquipmentTypeURI(equipmentType)));
 			Domain equipmentDomain = Configuration.getDomain(equipmentType);
@@ -84,23 +96,7 @@ public class SASModelMaker {
 			} else if (equipmentDomain == Domain.SPORT_LOISIR) {
 				equipmentResource.addProperty(RDF.type, BPEOnto.EquipementSportLoisir);
 			}
-			// Add features for equipments of specific domains
-			for (String feature : Configuration.sasFeatures.get(equipmentDomain)) {
-				Object featureValue = values[colIndexes.get(feature)];
-				if (featureValue == null) {
-					logger.warn("Null value for feature " + feature + " for equipment " + equipmentId + " of type " + equipmentType);
-					continue;
-				}
-				String featureMarker = featureValue.toString(); // For features, value object type is actually String
-				if (Configuration.featurePresence.containsKey(featureMarker)) {
-					equipmentResource.addProperty(Configuration.featurePresence.get(featureMarker), ResourceFactory.createResource(Configuration.inseeFeatureURI(feature)));
-				}
-			}
-			// Add sector and municipality (type java.util.String)
-			Object sectorValue = values[colIndexes.get("sect")];
-			if ((sectorValue != null) && !sectorValue.toString().equals("X")) { // Null does note actually happen in 2018 file
-				equipmentResource.addProperty(BPEOnto.secteurEquipement, ResourceFactory.createResource(Configuration.inseeSectorURI(sectorValue.toString())));
-			}
+			// Add general properties (municipality code, creation date)
 			String municipalityCode = values[colIndexes.get("depcom")].toString();
 			equipmentResource.addProperty(BPEOnto.communeEquipement, ResourceFactory.createResource(Configuration.inseeMunicipalityURI(municipalityCode)));
 			// Add creation date (type java.util.Date)
@@ -108,11 +104,51 @@ public class SASModelMaker {
 			if (dateValue != null) {
 				equipmentResource.addProperty(DCTerms.created, bpeModel.createTypedLiteral(dateFormat.format(dateValue), XSDDatatype.XSDdate));
 			}
-			// Add capacity (type java.lang.Long)
-			Long capacityValue = (Long) values[colIndexes.get("capacite")];
-			if ((capacityValue != null) && (capacityValue > 0)) {
-				equipmentResource.addProperty(BPEOnto.capacite, bpeModel.createTypedLiteral(capacityValue.intValue(), XSDDatatype.XSDint));
+			// Add specialized properties and features for equipments of specific domains
+			SortedSet<String> featuresAndProperties = featuresAndPropertiesByType.get(equipmentType);
+			if (featuresAndProperties != null) { // Would be null if no specialized features or properties for this type
+				for (String column : featuresAndProperties) {
+					if (column == null) continue; // No specialize
+					Object columnValue = values[colIndexes.get(column)];
+					if (columnValue == null) {
+						// Data checks indicate that this does not happen for 2018
+						logger.warn("Null value of column " + column + " for equipment " + equipmentId + " of type " + equipmentType);
+						continue;
+					}
+					if (Configuration.sasFeatures.get(equipmentDomain).contains(column)) {
+						// Case of a feature: value is 0 or 1
+						String featureMarker = columnValue.toString(); // For features, value object type is actually String
+						if (Configuration.featurePresence.containsKey(featureMarker)) {
+							equipmentResource.addProperty(Configuration.featurePresence.get(featureMarker), ResourceFactory.createResource(Configuration.inseeFeatureURI(column)));
+						}
+					} else { // Case of a specialized property (capacity, sector, number of screens...)
+						if ("sect".equals(column)) {
+							// Add sector
+							String sectorURI = Configuration.inseeSectorURI(columnValue.toString());
+							if (sectorURI == null) { // Sector should be "PU" or "PR"
+								logger.warn("Invalid sector value " + columnValue.toString() + " for equipment " + equipmentId + " of type " + equipmentType);
+							} else {
+								equipmentResource.addProperty(BPEOnto.secteurEquipement, ResourceFactory.createResource(sectorURI));
+							}
+						}
+						if ("capacite".equals(column)) {
+							// Add capacity (type java.lang.Long)
+							Long capacity = (Long) columnValue;
+							if ((capacity != null) && (capacity > 0)) {
+								equipmentResource.addProperty(BPEOnto.capacite, bpeModel.createTypedLiteral(capacity.intValue(), XSDDatatype.XSDint));
+							}
+						}
+						if ("nbsalles".equals(column)) {
+							// Add screen/stage number (type java.lang.Long)
+							Long rooms = (Long) columnValue;
+							if ((rooms != null) && (rooms > 0)) {
+								equipmentResource.addProperty(BPEOnto.nombreSalles, bpeModel.createTypedLiteral(rooms.intValue(), XSDDatatype.XSDint));
+							}
+						}
+					}
+				}
 			}
+
 			// Add geometry (lambert_x and lambert_y are of type java.lang.Double, or java.lang.Long if no decimal)
 			Object xLambert = values[colIndexes.get("lambert_x")];
 			Object yLambert = values[colIndexes.get("lambert_y")];
@@ -123,11 +159,11 @@ public class SASModelMaker {
 				if (Configuration.CREATE_GEOMETRY) {
 					equipmentResource.addProperty(RDF.type, GeoSPARQL.SpatialObject);
 					Resource geometryResource = bpeModel.createResource(Configuration.inseeEquipmentGeometryURI(equipmentId), GeoSPARQL.Geometry);
-					String wktLiteral = Configuration.getPointWKTLiteral(xLambertDouble, yLambertDouble, Configuration.LAMBERT_93_URI);
+					String wktLiteral = Configuration.getPointWKTLiteral(xLambertDouble, yLambertDouble, municipalityCode);
 					geometryResource.addProperty(GeoSPARQL.asWKT, bpeModel.createTypedLiteral(wktLiteral, GeoSPARQL.wktLiteral));
 					equipmentResource.addProperty(GeoSPARQL.hasGeometry, geometryResource);
 				}
-				else {} // What do we do in that case?
+				else {} // For now, we don't do anything in that case
 			}
 			;
 			if (++equipmentCreated % LOGGING_STEP == 1) logger.debug("Just created equipment number " + equipmentCreated);
@@ -136,6 +172,13 @@ public class SASModelMaker {
 		return bpeModel;
 	}
 
+	/**
+	 * Creates the BPE model with the default filter on the type of equipments.
+	 * The default filter is specified by the DEFAULT_FILTER constant.
+	 * 
+	 * @return The BPE extract as a Jena model.
+	 * @throws IOException In case of problem reading the database.
+	 */
 	public static Model makeBPEModel() throws IOException {
 
 		return makeBPEModel(type -> type.startsWith(DEFAULT_FILTER));

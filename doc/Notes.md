@@ -13,4 +13,4 @@
 
 ## To do
 
-  * Add capacite property (and sub-properties?) to ontology
+  * Add capacity sub-properties to ontology?
