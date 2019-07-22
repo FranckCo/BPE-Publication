@@ -13,6 +13,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.datatypes.BaseDatatype;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.ontology.OntProperty;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 
 public class Configuration {
 
@@ -246,6 +248,14 @@ public class Configuration {
 	    public String toURI() {
 
 	    	return inseeQualityLevelURI(this.code);
+	    }
+
+	    public static Map<QualityLevel, Resource> RESOURCE_MAP;
+	    static {
+	    	RESOURCE_MAP = new HashMap<QualityLevel, Resource>();
+	    	RESOURCE_MAP.put(MAUVAISE, ResourceFactory.createResource(inseeQualityLevelURI("MAUVAIS")));
+	    	RESOURCE_MAP.put(ACCEPTABLE, ResourceFactory.createResource(inseeQualityLevelURI("ACCEPTABLE")));
+	    	RESOURCE_MAP.put(BONNE, ResourceFactory.createResource(inseeQualityLevelURI("BON")));
 	    }
 
 	    @Override

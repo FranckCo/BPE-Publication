@@ -165,7 +165,6 @@ public class SASModelMaker {
 				}
 				else {} // For now, we don't do anything in that case
 			}
-			;
 			if (++equipmentCreated % LOGGING_STEP == 1) logger.debug("Just created equipment number " + equipmentCreated);
 		}
 		logger.info(equipmentCreated + " equipments created, the model contains " + bpeModel.size() + " triples");
@@ -203,6 +202,7 @@ public class SASModelMaker {
 		if ((LINES_TO_READ > 0) && (LINES_TO_READ < linesToRead)) linesToRead = LINES_TO_READ;
 		logger.debug("Reading " + linesToRead + " lines from " + Configuration.getSASDataFilePath().toString() + " to create quality model");
 		for (int line = 0; line < linesToRead; line++) {
+			if (line % LOGGING_STEP == 1) logger.debug("About to process line number " + line);
 			Object[] values = sasFileReader.readNext();
 			// Get the value of the quality level
 			QualityLevel qualityLevelValue = null;
@@ -212,7 +212,6 @@ public class SASModelMaker {
 				// Equipment is not geolocalized or quality value is invalid
 				continue;
 			}
-			System.out.println(qualityLevelValue);
 			if (qualityLevelValue == null) continue; // No quality information for this record
 			// Equipment identifier is first column + second column
 			String equipmentId = values[colIndexes.get("idetab")].toString().trim() + values[colIndexes.get("idservice")].toString().trim();
@@ -224,13 +223,10 @@ public class SASModelMaker {
 			Resource qualityAnnotationResource = qualityModel.createResource(Configuration.inseeGeometryQualityAnnotationURI(equipmentId), DQV.QualityAnnotation);
 			targetResource.addProperty(DQV.hasQualityAnnotation, qualityAnnotationResource);
 			qualityAnnotationResource.addProperty(Annotations.hasTarget, targetResource);
-			qualityAnnotationResource.addProperty(Annotations.hasBody, qualityModel.createResource(qualityLevelValue.toURI()));
+			qualityAnnotationResource.addProperty(Annotations.hasBody, QualityLevel.RESOURCE_MAP.get(qualityLevelValue));
 			qualityAnnotationResource.addProperty(Annotations.motivatedBy, DQV.qualityAssessment);
 		}
 
 		return qualityModel;
 	}
-
-	
-
 }
