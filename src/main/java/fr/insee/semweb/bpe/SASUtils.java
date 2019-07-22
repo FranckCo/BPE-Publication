@@ -8,11 +8,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,7 +41,56 @@ public class SASUtils {
 
 	static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
-	public static void countEquipmentsByType() throws IOException {
+	/**
+	 * Returns the list of features and properties defined for each type of equipments.
+	 * This method essentially reads the TSV file which cotains the base information.
+	 * 
+	 * @return A map indexed by equipment types, each value being the sorted list of relevant features and properties.
+	 */
+	public static SortedMap<String, SortedSet<String>> listFeaturesAndPropertiesByType() {
+
+		SortedMap<String, SortedSet<String>> featuresAndProperties = new TreeMap<String, SortedSet<String>>();
+		try (Stream<String> stream = Files.lines(Configuration.getFeaturesByTypesFilePath())) {
+			stream.filter(line -> !line.startsWith("#")).forEach(new Consumer<String>() {
+				@Override
+				public void accept(String line) {
+					String[] components = line.split("\t");
+					String type = components[0];
+					if (!featuresAndProperties.containsKey(type)) featuresAndProperties.put(type, new TreeSet<String>());
+					featuresAndProperties.get(type).addAll(Arrays.asList(components[1].split(" \\+ ")));
+				}
+			});
+		} catch (IOException e) {
+			return null;
+		}
+
+		return featuresAndProperties;
+	}
+
+	/**
+	 * Returns the list of columns in the SAS database.
+	 * 
+	 * @return A map indexed by column numbers, each value being a <code>Column</code> object.
+	 * @throws IOException In case of problem reading the database.
+	 */
+	public static Map<Integer, Column> listColumns() throws IOException {
+
+		SasFileReader sasFileReader = new SasFileReaderImpl(new FileInputStream(Configuration.getSASDataFilePath().toString()));
+		// Build the map of columns by indexes
+		Map<Integer, Column> columns = new HashMap<Integer, Column>();
+		int index = 0;
+		for (Column column : sasFileReader.getColumns()) columns.put(index++, column);
+
+		return columns;
+	}
+
+	/**
+	 * Returns the number of equipments of each type.
+	 * 
+	 * @return A map indexed by equipment types, each value being the number of equipments of this type.
+	 * @throws IOException In case of problem reading the database.
+	 */
+	public static SortedMap<String, Integer> countEquipmentsByType() throws IOException {
 
 		SasFileReader sasFileReader = new SasFileReaderImpl(new FileInputStream(Configuration.getSASDataFilePath().toString()));
 		// Build the map of column indexes
@@ -55,16 +110,18 @@ public class SASUtils {
 			countings.putIfAbsent(equipmentType, 0);
 			countings.put(equipmentType, countings.get(equipmentType) + 1);
 		}
-		for (String equipmentType : countings.keySet()) {
-			System.out.println(equipmentType + "\t" + countings.get(equipmentType));
-		}
-		countings = aggregateCountings(countings, 2);
-		for (String equipmentType : countings.keySet()) {
-			System.out.println(equipmentType + "\t" + countings.get(equipmentType));
-		}
+
+		return countings;
 	}
 
-	private static SortedMap<String, Integer> aggregateCountings(Map<String, Integer> countings, int keyLength) {
+	/**
+	 * Aggregates counts of equipments by type according to the first characters of the type.
+	 * 
+	 * @param countings The numbers of equipments of each type (see above).
+	 * @param keyLength The length of the aggregation keys.
+	 * @return A map indexed by aggregation keys, each value being the aggregated number of equipments for this key.
+	 */
+	public static SortedMap<String, Integer> aggregateCountings(Map<String, Integer> countings, int keyLength) {
 
 		SortedMap<String, Integer> aggregates = new TreeMap<String, Integer>();
 

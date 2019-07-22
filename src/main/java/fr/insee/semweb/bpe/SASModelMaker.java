@@ -39,7 +39,7 @@ public class SASModelMaker {
 	static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
 	final static Long LINES_TO_READ = 0L; // Zero means read all lines
-	final static int LOGGING_STEP = 10000;
+	final static int LOGGING_STEP = 10000; // Should be strictly positive
 	final static String DEFAULT_FILTER = "E102"; // Will only produce equipment whose type starts with the filter (set to empty for all equipments)
 
 	public static Model makeBPEModel(Predicate<String> typeFilter) throws IOException {
@@ -75,7 +75,7 @@ public class SASModelMaker {
 			String equipmentType = values[colIndexes.get("typequ")].toString().trim();
 			// Test conformance of equipment type to filter predicate
 			if (!typeFilter.test(equipmentType)) continue;
-
+ 
 			Resource equipmentResource = bpeModel.createResource(Configuration.inseeEquipmentURI(String.valueOf(equipmentId)), BPEOnto.Equipement);
 			equipmentResource.addProperty(DCTerms.type, bpeModel.createResource(Configuration.inseeEquipmentTypeURI(equipmentType)));
 			Domain equipmentDomain = Configuration.getDomain(equipmentType);
@@ -187,4 +187,7 @@ public class SASModelMaker {
 
 		return qualityModel;
 	}
+
+	
+
 }

@@ -49,7 +49,7 @@ public class Configuration {
 
 	/** Path of the TSV file containing the links between equipment types and features or properties */
 	public static Path getFeaturesByTypesFilePath() {
-		return CONF_RESOURCE_PATH.resolve("features.tsv");
+		return CONF_RESOURCE_PATH.resolve("types-features.tsv");
 	}
 
 	// dBase files
