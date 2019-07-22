@@ -35,6 +35,11 @@ public class SASUtilsTest {
 	}
 
 	@Test
+	public void testCheckFeaturesAndPropertiesByType() throws IOException {
+		SASUtils.checkFeaturesAndProperties();
+	}
+
+	@Test
 	public void testListColumns() throws IOException {
 
 		Map<Integer, Column> columns = SASUtils.listColumns();

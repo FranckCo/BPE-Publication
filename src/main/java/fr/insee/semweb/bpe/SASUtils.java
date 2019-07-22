@@ -67,6 +67,34 @@ public class SASUtils {
 		return featuresAndProperties;
 	}
 
+	public static void checkFeaturesAndProperties() throws IOException {
+
+		SortedMap<String, SortedSet<String>> featuresAndPropertiesByType = listFeaturesAndPropertiesByType();
+
+		SasFileReader sasFileReader = new SasFileReaderImpl(new FileInputStream(Configuration.getSASDataFilePath().toString()));
+		// Build the map of column indexes
+		Map<String, Integer> colIndexes = new HashMap<String, Integer>();
+		int index = 0;
+		for (Column column : sasFileReader.getColumns()) colIndexes.put(column.getName().toLowerCase(), index++);
+		long linesToRead = sasFileReader.getSasFileProperties().getRowCount();
+		for (long line = 0; line < linesToRead; line++) {
+			Object[] values = sasFileReader.readNext();
+			// Equipment identifier is first column + second column
+			String equipmentId = values[colIndexes.get("idetab")].toString().trim() + values[colIndexes.get("idservice")].toString().trim();
+			// Create equipment resource with relevant types
+			String equipmentType = values[colIndexes.get("typequ")].toString().trim();
+			// Expected features and properties for this type of equipment
+			if (featuresAndPropertiesByType.containsKey(equipmentType)) {
+				for (String column : featuresAndPropertiesByType.get(equipmentType)) {
+					Object columnValue = values[colIndexes.get(column)];
+					if (columnValue == null) {
+						logger.warn("Null value for column " + column + " for equipment " + equipmentId + " of type " + equipmentType);
+					}
+				}
+			}
+		}
+	}
+
 	/**
 	 * Returns the list of columns in the SAS database.
 	 * 
