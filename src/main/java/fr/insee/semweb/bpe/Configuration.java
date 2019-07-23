@@ -18,10 +18,11 @@ import org.apache.jena.rdf.model.ResourceFactory;
 
 public class Configuration {
 
-	public static final Charset STRING_CHARSET = Charset.forName("Cp1252");
-	public static final int SAMPLING_RATE = 10000;
+	public static final Charset STRING_CHARSET = Charset.forName("Cp1252"); // For dBase files
+	public static final int SAMPLING_RATE = 10000; // Idem
 	public static final boolean CREATE_GEOMETRY = true; // Create GeoSPARQL Geometry resources
 	public static final boolean QUALITY_ANNOTATIONS = true; // Create DQV quality annotations
+	public static final boolean BETA_NAMING = true; // Creates URI in a 'beta' namespace
 
 	/** Input data will be read in this folder, and all files created will be put here */
 	public static final Path DATA_RESOURCE_PATH = Paths.get("src/main/resources/data");
@@ -102,11 +103,11 @@ public class Configuration {
 
 	// Constants for naming
 	/** Base URI for equipments */
-	public static String INSEE_EQUIPMENT_BASE_URI = "http://id.insee.fr/territoire/equipement/";
+	public static String INSEE_EQUIPMENT_BASE_URI = "http://" + (BETA_NAMING ? "beta." : "") + "id.insee.fr/territoire/equipement/";
 	/** Base URI for Insee codes */
-	public static String INSEE_CODES_BASE_URI = "http://id.insee.fr/codes/";
+	public static String INSEE_CODES_BASE_URI = "http://" + (BETA_NAMING ? "beta." : "") + "id.insee.fr/codes/";
 	/** Base URI for Insee quality codes */
-	public static String INSEE_QUALITY_CODES_BASE_URI = "http://id.insee.fr/codes/qualite/";
+	public static String INSEE_QUALITY_CODES_BASE_URI = "http://" + (BETA_NAMING ? "beta." : "") + "id.insee.fr/codes/qualite/";
 	/** URI for the concept scheme of equipment types */
 	public static String INSEE_EQUIPMENT_TYPES_CODELIST_URI = INSEE_CODES_BASE_URI + "territoire/typesEquipements";
 	/** URI for the concept scheme of equipment features */
