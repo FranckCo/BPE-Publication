@@ -67,10 +67,10 @@ public class SASModelMaker {
 		bpeModel.setNsPrefix("rdfs", RDFS.getURI());
 		bpeModel.setNsPrefix("ibpe", BPEOnto.getURI());
 		bpeModel.setNsPrefix("xsd", XSD.getURI());
-		bpeModel.setNsPrefix("ibpe-eq", "http://id.insee.fr/territoire/equipement/");
-		bpeModel.setNsPrefix("icod-teq", "http://id.insee.fr/codes/territoire/typeEquipement/");
-		bpeModel.setNsPrefix("icod-car", "http://id.insee.fr/codes/territoire/caractere/");
-		bpeModel.setNsPrefix("icod-sec", "http://id.insee.fr/codes/territoire/secteur/");
+		bpeModel.setNsPrefix("ibpe-eq", Configuration.INSEE_EQUIPMENT_BASE_URI);
+		bpeModel.setNsPrefix("icod-teq", Configuration.INSEE_CODES_BASE_URI + "territoire/typeEquipement/");
+		bpeModel.setNsPrefix("icod-car", Configuration.INSEE_CODES_BASE_URI + "territoire/caractere/");
+		bpeModel.setNsPrefix("icod-sec", Configuration.INSEE_CODES_BASE_URI +  "territoire/secteur/");
 		bpeModel.setNsPrefix("igeo-com", "http://id.insee.fr/geo/commune/");
 		if (Configuration.CREATE_GEOMETRY) bpeModel.setNsPrefix("geo", GeoSPARQL.getURI());
 
@@ -202,7 +202,7 @@ public class SASModelMaker {
 
 		Model qualityModel = ModelFactory.createDefaultModel();
 		if (!Configuration.CREATE_GEOMETRY) qualityModel.setNsPrefix("ibpe-eq", "http://id.insee.fr/territoire/equipement/");
-		qualityModel.setNsPrefix("icod-qlt", "http://id.insee.fr/codes/qualite/");
+		qualityModel.setNsPrefix("icod-qlt", Configuration.INSEE_QUALITY_CODES_BASE_URI);
 		qualityModel.setNsPrefix("oa", Annotations.getURI());
 		qualityModel.setNsPrefix("dqv", DQV.getURI());
 

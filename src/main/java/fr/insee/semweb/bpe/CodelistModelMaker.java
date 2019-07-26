@@ -42,8 +42,8 @@ public class CodelistModelMaker {
 		codeListModel.setNsPrefix("skos", SKOS.getURI());
 		codeListModel.setNsPrefix("rdfs", RDFS.getURI());
 		codeListModel.setNsPrefix("ibpe", BPEOnto.getURI());
-		codeListModel.setNsPrefix("icod-ter", "http://id.insee.fr/codes/territoire/");
-		codeListModel.setNsPrefix("icod-teq", "http://id.insee.fr/codes/territoire/typeEquipement/");
+		codeListModel.setNsPrefix("icod-ter", Configuration.INSEE_CODES_BASE_URI + "territoire/");
+		codeListModel.setNsPrefix("icod-teq", Configuration.INSEE_CODES_BASE_URI + "territoire/typeEquipement/");
 
 		// Create the code list resource
 		Resource schemeResource = codeListModel.createResource(Configuration.INSEE_EQUIPMENT_TYPES_CODELIST_URI, SKOS.ConceptScheme);
@@ -107,8 +107,8 @@ public class CodelistModelMaker {
 		codeListModel.setNsPrefix("skos", SKOS.getURI());
 		codeListModel.setNsPrefix("rdfs", RDFS.getURI());
 		codeListModel.setNsPrefix("ibpe", BPEOnto.getURI());
-		codeListModel.setNsPrefix("icod-ter", "http://id.insee.fr/codes/territoire/");
-		codeListModel.setNsPrefix("icod-car", "http://id.insee.fr/codes/territoire/caractere/");
+		codeListModel.setNsPrefix("icod-ter", Configuration.INSEE_CODES_BASE_URI + "territoire/");
+		codeListModel.setNsPrefix("icod-car", Configuration.INSEE_CODES_BASE_URI + "territoire/caractere/");
 
 		// Create the code list resource
 		Resource schemeResource = codeListModel.createResource(Configuration.INSEE_FEATURES_CODELIST_URI, SKOS.ConceptScheme);
@@ -174,8 +174,8 @@ public class CodelistModelMaker {
 		codeListModel.setNsPrefix("skos", SKOS.getURI());
 		codeListModel.setNsPrefix("rdfs", RDFS.getURI());
 		codeListModel.setNsPrefix("ibpe", BPEOnto.getURI());
-		codeListModel.setNsPrefix("icod-ter", "http://id.insee.fr/codes/territoire/");
-		codeListModel.setNsPrefix("icod-sec", "http://id.insee.fr/codes/territoire/secteur/"); // Could be promoted to global-level code list
+		codeListModel.setNsPrefix("icod-ter", Configuration.INSEE_CODES_BASE_URI + "territoire/");
+		codeListModel.setNsPrefix("icod-sec", Configuration.INSEE_CODES_BASE_URI + "territoire/secteur/"); // Could be promoted to global-level code list
 
 		// Create the code list resource
 		Resource schemeResource = codeListModel.createResource(Configuration.INSEE_SECTORS_CODELIST_URI, SKOS.ConceptScheme);

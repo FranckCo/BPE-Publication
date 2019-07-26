@@ -14,7 +14,7 @@ public class CodelistModelMakerTest {
 	public void testEquipmentTypesCodelist() throws Exception {
 
 		Model codeList = CodelistModelMaker.makeEquipmentTypesCodelistModel();
-		codeList.write(new FileWriter("src/main/resources/data/cl-typequ-tsv.ttl"), "TTL");
+		codeList.write(new FileWriter("src/main/resources/data/cl-typequ.ttl"), "TTL");
 	}
 
 	@Test

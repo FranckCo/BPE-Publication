@@ -21,9 +21,12 @@ public class SASUtilsTest {
 			System.out.println(equipmentType + "\t" + countings.get(equipmentType));
 		}
 		countings = SASUtils.aggregateCountings(countings, 2);
+		int total = 0;
 		for (String equipmentType : countings.keySet()) {
+			total += countings.get(equipmentType);
 			System.out.println(equipmentType + "\t" + countings.get(equipmentType));
 		}
+		System.out.println("Total number of equipments: " + total);
 	}
 
 	@Test

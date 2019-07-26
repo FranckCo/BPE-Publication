@@ -19,7 +19,7 @@ public class SASLauncher {
 	public static void main(String... args) throws InterruptedException, IOException {
 
 		final int SLEEP_DURATION = 20 * 1000;
-		boolean CREATE_MAIN_MODEL = false;
+		boolean CREATE_MAIN_MODEL = true;
 		boolean CREATE_QUALITY_MODEL = true;
 
 		Map<String, Predicate<String>> predicates = new HashMap<String, Predicate<String>>();
@@ -50,7 +50,7 @@ public class SASLauncher {
 			for (String chunk : chunks) {
 				logger.info("Lanching main model creation for filter " + chunk);
 				Model equipments = SASModelMaker.makeBPEModel(predicates.get(chunk));
-				equipments.write(new FileWriter("src/main/resources/data/equipments-" + chunk.toLowerCase() + ".ttl"), "TTL");
+				equipments.write(new FileWriter("src/main/resources/data/facilities-" + chunk.toLowerCase() + ".ttl"), "TTL");
 				System.out.println("Model created for filter " + chunk + " with " + equipments.size() + " triples");
 				tripleCount += equipments.size();
 				equipments.close();
@@ -60,6 +60,7 @@ public class SASLauncher {
 		}
 		if (CREATE_QUALITY_MODEL) {
 			tripleCount = 0;
+			int modelCount = chunks.size();
 			for (String chunk : chunks) {
 				logger.info("Lanching quality model creation for filter " + chunk);
 				Model quality = SASModelMaker.makeQualityModel(predicates.get(chunk));
@@ -68,13 +69,13 @@ public class SASLauncher {
 					System.out.println("Quality model created for filter " + chunk + " with " + quality.size() + " triples");
 					tripleCount += quality.size();
 				} else { // Some types of equipments are not geocoded
-					chunks.remove(chunk);
 					System.out.println("No quality metadata for filter " + chunk + ", no model created");
+					modelCount--;
 				}
 				quality.close();
 				Thread.sleep(SLEEP_DURATION); // Let the garbage collection proceed
 			}
-			System.out.println(chunks.size() + " models created with a total of " + tripleCount + " triples");
+			System.out.println(modelCount + " models created with a total of " + tripleCount + " triples");
 		}
 	}
 }
