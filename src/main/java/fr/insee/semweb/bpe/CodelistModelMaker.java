@@ -1,10 +1,14 @@
 package fr.insee.semweb.bpe;
 
+import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -313,5 +317,65 @@ public class CodelistModelMaker {
 				.filter(line -> Domain.valueOf(line.split("\t")[1]).equals(domain))
 				.map(line -> line.split("\t")[0])
 				.collect(Collectors.toList());
+	}
+
+	/**
+	 * Orders a list of codes in a Turtle file.
+	 * Reads of Turtle file containing a code lists and writes a Turtle file containing the same list correctly ordered.
+	 * The order is: OWL class (if any), SKOS concept scheme, SKOS collections if any, SKOS concepts ordered by URIs.
+	 * 
+	 * @throws IOException In case of problem reading the input or writing the output.
+	 */
+	public static void orderCodeList(Path unorderedIn, Path orderedOut) throws IOException, IOException {
+
+		List<String> chunks = new ArrayList<String>();
+		try (BufferedReader reader = new BufferedReader(new FileReader(unorderedIn.toFile()))) {
+			StringBuilder chunk = new StringBuilder();
+			String line = "";
+			while ((line = reader.readLine()) != null) {
+				if (chunk.length() == 0) {
+					// First line of chunk
+				}
+				chunk.append(line).append(System.lineSeparator());
+				if (line.trim().length() == 0) {
+					chunks.add(chunk.toString());
+					chunk.setLength(0);
+				}
+			}
+			// Add last chunk if not empty
+			if (chunk.length() > 0) chunks.add(chunk.toString());
+		}
+		try (BufferedReader reader = new BufferedReader(new FileReader(orderedOut.toFile()))) {
+			for (String chunk : chunks) {
+				System.out.println(chunk);
+			}			
+		}
+	}
+
+	/** Enumeration of code list components */
+	public enum CodeListComponent {
+
+		CLASS,
+		SCHEME,
+		COLLECTION,
+		CONCEPT;
+
+		/**
+		 * Guesses the type of the subject of a Turtle statement.
+		 * Very basic implementation. Could do better using https://github.com/antlr/grammars-v4/blob/master/turtle/TURTLE.g4.
+		 * 
+		 * @param turtleText A Turtle statement as defined in https://www.w3.org/TR/turtle/#sec-grammar-grammar.
+		 * @return The value of the enumeration corresponding to the guess made, or <code>null</code> if not recognised.
+		 */
+		public static CodeListComponent guessComponent(String turtleText) {
+
+			if (turtleText == null) return null;
+			if (turtleText.contains("owl:Class")) return CLASS;
+			if (turtleText.contains("skos:ConceptScheme")) return SCHEME;
+			if (turtleText.contains("skos:Collection")) return COLLECTION;
+			if (turtleText.contains("skos:Concept")) return CONCEPT;
+			
+			return null;
+		}
 	}
 }

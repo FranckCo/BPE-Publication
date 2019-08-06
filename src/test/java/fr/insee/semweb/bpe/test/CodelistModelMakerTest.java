@@ -1,6 +1,8 @@
 package fr.insee.semweb.bpe.test;
 
 import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Path;
 
 import org.apache.jena.rdf.model.Model;
 import org.junit.Test;
@@ -44,5 +46,12 @@ public class CodelistModelMakerTest {
 		System.out.println(CodelistModelMaker.getFeaturesList(Configuration.Domain.ENSEMBLE));
 		System.out.println(CodelistModelMaker.getFeaturesList(Configuration.Domain.ENSEIGNEMENT));
 		System.out.println(CodelistModelMaker.getFeaturesList(Configuration.Domain.SPORT_LOISIR));
+	}
+
+	@Test
+	public void testOrderCodeList() throws IOException {
+
+		Path codeListPath = Configuration.DATA_RESOURCE_PATH.resolve("cl-sect.ttl");
+		CodelistModelMaker.orderCodeList(codeListPath, null);
 	}
 }
