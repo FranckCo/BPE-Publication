@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.SortedSet;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.epam.parso.Column;
 

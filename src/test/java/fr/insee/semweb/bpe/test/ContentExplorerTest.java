@@ -1,16 +1,11 @@
 package fr.insee.semweb.bpe.test;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import fr.insee.semweb.bpe.Configuration.Domain;
 import fr.insee.semweb.bpe.ContentExplorer;
 
 public class ContentExplorerTest {
-
-	@Before
-	public void setUp() throws Exception {
-	}
 
 	@Test
 	public void testListCharacteristics() {

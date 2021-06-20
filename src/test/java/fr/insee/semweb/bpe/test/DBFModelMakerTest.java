@@ -3,7 +3,7 @@ package fr.insee.semweb.bpe.test;
 import java.io.FileWriter;
 
 import org.apache.jena.rdf.model.Model;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import fr.insee.semweb.bpe.DBFModelMaker;
 import fr.insee.semweb.bpe.Configuration.Domain;

@@ -3,10 +3,9 @@ package fr.insee.semweb.bpe.test;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.apache.jena.rdf.model.Model;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import fr.insee.semweb.bpe.CodelistModelMaker;
 import fr.insee.semweb.bpe.Configuration;
