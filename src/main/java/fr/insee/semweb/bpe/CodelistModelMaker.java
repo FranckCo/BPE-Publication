@@ -1,9 +1,10 @@
 package fr.insee.semweb.bpe;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -12,6 +13,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -55,6 +58,7 @@ public class CodelistModelMaker {
 		schemeResource.addProperty(SKOS.prefLabel, codeListModel.createLiteral("Equipment types", "en"));
 		schemeResource.addProperty(SKOS.prefLabel, codeListModel.createLiteral("Types d'équipements", "fr"));
 		// Create also the class representing the code values (see Data Cube §8.1)
+		Resource classResource = codeListModel.createResource(BPEOnto.TypeEquipement.getURI(), OWL.Class);
 		schemeResource.addProperty(RDFS.seeAlso, BPEOnto.TypeEquipement);  // Add a reference from the scheme to the TypeEquipement class
 
 		// Create the collections for 'enseignement' and 'sport-loisir' equipment types
@@ -328,27 +332,58 @@ public class CodelistModelMaker {
 	 */
 	public static void orderCodeList(Path unorderedIn, Path orderedOut) throws IOException, IOException {
 
+		logger.info("Reordering of code list in Turtle file " + unorderedIn);
+
 		List<String> chunks = new ArrayList<String>();
+		Map<CodeListComponent, List<Integer>> indexes = new HashMap<CodeListComponent, List<Integer>>();
+		for (CodeListComponent composant : CodeListComponent.values()) indexes.put(composant, new ArrayList<Integer>());
+
 		try (BufferedReader reader = new BufferedReader(new FileReader(unorderedIn.toFile()))) {
 			StringBuilder chunk = new StringBuilder();
 			String line = "";
-			while ((line = reader.readLine()) != null) {
-				if (chunk.length() == 0) {
-					// First line of chunk
-				}
-				chunk.append(line).append(System.lineSeparator());
-				if (line.trim().length() == 0) {
-					chunks.add(chunk.toString());
+			do {
+				line = reader.readLine();
+				if ((line != null) && (line.trim().length() > 0)) chunk.append(line).append(System.lineSeparator());
+				else { // End of a chunk
+					if (chunk.length() == 0) continue; // Several empty lines, or empty line before end of file
+					String chunkString = chunk.toString();
+					CodeListComponent componentType = CodeListComponent.guessComponentType(chunkString);
+					if (componentType == null) {
+						// The first chunk is prefix declarations
+						if (chunks.size() > 0) logger.warn("Unrecognized Turtle segment starting with " + chunkString.substring(0, 100));
+					}
+					else indexes.get(componentType).add(chunks.size());
+					chunks.add(chunkString);
 					chunk.setLength(0);
 				}
-			}
-			// Add last chunk if not empty
-			if (chunk.length() > 0) chunks.add(chunk.toString());
+			} while (line != null);
 		}
-		try (BufferedReader reader = new BufferedReader(new FileReader(orderedOut.toFile()))) {
-			for (String chunk : chunks) {
-				System.out.println(chunk);
-			}			
+		// A bit of reporting, and write ordered output
+		logger.info("Code list components: " + indexes);
+		if (indexes.get(CodeListComponent.CLASS).size() > 1) logger.warn("Several classes are defined in the code list");
+		if (indexes.get(CodeListComponent.SCHEME).size() > 1) logger.warn("Several concept schemes are defined in the code list");
+
+		try (BufferedWriter writer = new BufferedWriter(new FileWriter(orderedOut.toFile()))) {
+
+			// Fist write prefixes, then class and concept scheme (hopefully unique), then collections
+			writer.write(chunks.get(0));
+			for (int index : indexes.get(CodeListComponent.CLASS)) writer.write(chunks.get(index));
+			writer.newLine();
+			for (int index : indexes.get(CodeListComponent.SCHEME)) {
+				writer.write(chunks.get(index));
+				writer.newLine();
+			}
+			for (int index : indexes.get(CodeListComponent.COLLECTION)) {
+				writer.write(chunks.get(index));
+				writer.newLine();
+			}
+			// Sort concepts and write them
+			SortedSet<String> orderedConcepts = new TreeSet<String>();
+			for (int index : indexes.get(CodeListComponent.CONCEPT)) orderedConcepts.add(chunks.get(index));
+			for (String concept : orderedConcepts) {
+				writer.write(concept);
+				writer.newLine();
+			}
 		}
 	}
 
@@ -367,7 +402,7 @@ public class CodelistModelMaker {
 		 * @param turtleText A Turtle statement as defined in https://www.w3.org/TR/turtle/#sec-grammar-grammar.
 		 * @return The value of the enumeration corresponding to the guess made, or <code>null</code> if not recognised.
 		 */
-		public static CodeListComponent guessComponent(String turtleText) {
+		public static CodeListComponent guessComponentType(String   turtleText) {
 
 			if (turtleText == null) return null;
 			if (turtleText.contains("owl:Class")) return CLASS;
