@@ -15,7 +15,7 @@ public class CodelistModelMakerTest {
 	@Test
 	public void testEquipmentTypesCodelist() throws Exception {
 
-		Model codeList = CodelistModelMaker.makeEquipmentTypesCodelistModel();
+		Model codeList = CodelistModelMaker.makeEquipmentTypesCodelistModel(false);
 		codeList.write(new FileWriter("src/main/resources/data/cl-typequ.ttl"), "TTL");
 	}
 
@@ -45,7 +45,7 @@ public class CodelistModelMakerTest {
 
 		Path tempFilePath = Configuration.DATA_RESOURCE_PATH.resolve("cl-temp.ttl");
 
-		Model codeList = CodelistModelMaker.makeEquipmentTypesCodelistModel();
+		Model codeList = CodelistModelMaker.makeEquipmentTypesCodelistModel(false);
 		Path orderedCodeListPath = Configuration.DATA_RESOURCE_PATH.resolve("cl-typequ-ord.ttl");
 		codeList.write(new FileWriter(tempFilePath.toString()), "TTL");
 		CodelistModelMaker.orderCodeList(tempFilePath, orderedCodeListPath);

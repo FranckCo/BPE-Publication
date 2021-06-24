@@ -6,7 +6,7 @@ A4	Artisanat du bâtiment
 A5	Autres services à la population
 B	Commerces
 B1	Grandes surfaces
-B2	Commeerces alimentaires
+B2	Commerces alimentaires
 B3	Commerces spécialisés non alimentaires
 C	Enseignement
 C1	Enseignement du premier degré
@@ -66,10 +66,10 @@ A406	Entreprise générale du bâtiment
 A501	Coiffure
 A502	Vétérinaire
 A503	Agence de travail temporaire
-A504	Restaurant	Restauration rapide
+A504	Restaurant - Restauration rapide
 A505	Agence immobilière
-A506	Pressing	Laverie automatique
-A507	Institut de beauté	Onglerie
+A506	Pressing - Laverie automatique
+A507	Institut de beauté - Onglerie
 B101	Hypermarché
 B102	Supermarché
 B103	Grande surface de bricolage

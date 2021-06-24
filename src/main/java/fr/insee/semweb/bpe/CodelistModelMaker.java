@@ -1,24 +1,8 @@
 package fr.insee.semweb.bpe;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
+import fr.insee.semweb.bpe.Configuration.Domain;
+import net.iryndin.jdbf.core.DbfRecord;
+import net.iryndin.jdbf.reader.DbfReader;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
@@ -29,9 +13,12 @@ import org.apache.jena.vocabulary.SKOS;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import fr.insee.semweb.bpe.Configuration.Domain;
-import net.iryndin.jdbf.core.DbfRecord;
-import net.iryndin.jdbf.reader.DbfReader;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CodelistModelMaker {
 
@@ -39,11 +26,12 @@ public class CodelistModelMaker {
 
 	/**
 	 * Reads the code list of equipment types in the DBF file into a Jena model.
-	 * 
+	 *
+	 * @param useDBF Indicates if code list should be read in the dBase files (otherwise, TSV is used).
 	 * @return A Jena <code>Model</code> containing the code list as a SKOS concept scheme.
 	 * @throws IOException In case of problem reading the source file.
 	 */
-	public static Model makeEquipmentTypesCodelistModel() throws IOException {
+	public static Model makeEquipmentTypesCodelistModel(boolean useDBF) throws IOException {
 
 		Model codeListModel = ModelFactory.createDefaultModel();
 		codeListModel.setNsPrefix("skos", SKOS.getURI());
@@ -57,9 +45,11 @@ public class CodelistModelMaker {
 		schemeResource.addProperty(SKOS.notation, "CL_TYPEQU");
 		schemeResource.addProperty(SKOS.prefLabel, codeListModel.createLiteral("Equipment types", "en"));
 		schemeResource.addProperty(SKOS.prefLabel, codeListModel.createLiteral("Types d'équipements", "fr"));
-		// Create also the class representing the code values (see Data Cube §8.1)
+		// Create also the class representing the code values (see Data Cube §8.1) and add cross-references to and from the scheme
+		// For better clarity, we use the TypeEquipement class defined in the ontology
 		Resource classResource = codeListModel.createResource(BPEOnto.TypeEquipement.getURI(), OWL.Class);
-		schemeResource.addProperty(RDFS.seeAlso, BPEOnto.TypeEquipement);  // Add a reference from the scheme to the TypeEquipement class
+		classResource.addProperty(RDFS.seeAlso, schemeResource);
+		schemeResource.addProperty(RDFS.seeAlso, classResource);
 
 		// Create the collections for 'enseignement' and 'sport-loisir' equipment types
 		Resource educationCollectionResource = codeListModel.createResource(Configuration.inseeEquipmentTypesCollectionURI(Domain.ENSEIGNEMENT), SKOS.Collection);
@@ -71,31 +61,31 @@ public class CodelistModelMaker {
 		sportLeisureCollectionResource.addProperty(SKOS.prefLabel, codeListModel.createLiteral("Sports and leisure equipment types", "en"));
 		sportLeisureCollectionResource.addProperty(RDFS.seeAlso, BPEOnto.TypeEquipementSportLoisir);
 
-		boolean useTSV = true; // Set to false to use dBase source file
-		Map<String, String> equipmentTypes = useTSV ? readEquipmentTypesTSV() : readEquipmentTypesDBF();
-		for (String equipementTypeCode : equipmentTypes.keySet()) {
-			Resource codeResource = codeListModel.createResource(Configuration.inseeEquipmentTypeURI(equipementTypeCode), SKOS.Concept);
+		// Create the resources corresponding to individual codes
+		Map<String, String> equipmentTypes = useDBF ? readEquipmentTypesDBF() : readEquipmentTypesTSV() ;
+		for (String equipmentTypeCode : equipmentTypes.keySet()) {
+			Resource codeResource = codeListModel.createResource(Configuration.inseeEquipmentTypeURI(equipmentTypeCode), SKOS.Concept);
 			codeResource.addProperty(RDF.type, BPEOnto.TypeEquipement); // The codes are instances of the code concept class
-			codeResource.addProperty(SKOS.notation, equipementTypeCode);
-			codeResource.addProperty(SKOS.prefLabel, codeListModel.createLiteral(equipmentTypes.get(equipementTypeCode), "fr"));
+			codeResource.addProperty(SKOS.notation, equipmentTypeCode);
+			codeResource.addProperty(SKOS.prefLabel, codeListModel.createLiteral(equipmentTypes.get(equipmentTypeCode), "fr"));
 			codeResource.addProperty(SKOS.inScheme, schemeResource);
 			// If in specific domain, specify narrower type and add to collection
-			if (Configuration.isEducation(equipementTypeCode)) {
+			if (Configuration.isEducation(equipmentTypeCode)) {
 				codeResource.addProperty(RDF.type, BPEOnto.TypeEquipementEnseignement);
 				educationCollectionResource.addProperty(SKOS.member, codeResource);
 			}
-			if (Configuration.isSportLeisure(equipementTypeCode)) {
+			if (Configuration.isSportLeisure(equipmentTypeCode)) {
 				codeResource.addProperty(RDF.type, BPEOnto.TypeEquipementSportLoisir);
 				sportLeisureCollectionResource.addProperty(SKOS.member, codeResource);
 			}
-			if (useTSV) {
+			if (!useDBF) {
 				// Codes of higher levels are only in the TSV file
-				if (equipementTypeCode.length() == 1) {
+				if (equipmentTypeCode.length() == 1) {
 					schemeResource.addProperty(SKOS.hasTopConcept, codeResource);
 					continue;
 				}
-				int parentCodeLength = (equipementTypeCode.length() == 2) ? 1 : 2;
-				Resource parentResource = codeListModel.createResource(Configuration.inseeEquipmentTypeURI(equipementTypeCode.substring(0, parentCodeLength)));
+				int parentCodeLength = (equipmentTypeCode.length() == 2) ? 1 : 2;
+				Resource parentResource = codeListModel.createResource(Configuration.inseeEquipmentTypeURI(equipmentTypeCode.substring(0, parentCodeLength)));
 				codeResource.addProperty(SKOS.broader, parentResource);
 				parentResource.addProperty(SKOS.narrower, codeResource);
 			} else schemeResource.addProperty(SKOS.hasTopConcept, codeResource);
@@ -105,7 +95,7 @@ public class CodelistModelMaker {
 	}
 
 	/**
-	 * Reads the code list of equipment features in the text file into a Jena model.
+	 * Reads the code list of equipment features in the text file and converts it into a Jena model.
 	 * 
 	 * @return A Jena <code>Model</code> containing the code list as a SKOS concept scheme.
 	 */
@@ -123,8 +113,10 @@ public class CodelistModelMaker {
 		schemeResource.addProperty(SKOS.notation, "CL_CARACT");
 		schemeResource.addProperty(SKOS.prefLabel, codeListModel.createLiteral("Equipment features", "en"));
 		schemeResource.addProperty(SKOS.prefLabel, codeListModel.createLiteral("Caractéristiques d'équipements", "fr"));
-		// Create also the class representing the code values (see Data Cube §8.1)
-		schemeResource.addProperty(RDFS.seeAlso, BPEOnto.Caractere);  // Add a reference from the scheme to the Caractere class
+		// Create also the class representing the code values (see Data Cube §8.1) and add cross-references to and from the scheme
+		Resource classResource = codeListModel.createResource(BPEOnto.Caractere.getURI(), OWL.Class);
+		classResource.addProperty(RDFS.seeAlso, schemeResource);
+		schemeResource.addProperty(RDFS.seeAlso, classResource);
 
 		// Create the collections for 'enseignement' and 'sport-loisir' features
 		Resource educationCollectionResource = codeListModel.createResource(Configuration.inseeFeaturesCollectionURI(Domain.ENSEIGNEMENT), SKOS.Collection);
@@ -138,32 +130,31 @@ public class CodelistModelMaker {
 
 		// Read the TSV file to get the list of features 
 		Path codelistFilePath = Configuration.getFeaturesCodelistFilePath();
+		logger.info("Building the features code list from file " + codelistFilePath);
         try (Stream<String> lines = Files.lines(codelistFilePath)) {
-        	lines.forEach(new Consumer<String>() {
-                public void accept(String line) {
-                    String[] tokens = line.split("\t");
-                    if (tokens.length == 3) {
-                    	String featureCode = tokens[0];
-                    	Resource codeResource = codeListModel.createResource(Configuration.inseeFeatureURI(featureCode), SKOS.Concept);
-						codeResource.addProperty(RDF.type, BPEOnto.Caractere); // The codes are instances of the code concept class
-						codeResource.addProperty(SKOS.notation, featureCode);
-						codeResource.addProperty(SKOS.prefLabel, codeListModel.createLiteral(tokens[2], "fr"));
-						codeResource.addProperty(SKOS.inScheme, schemeResource);
-						schemeResource.addProperty(SKOS.hasTopConcept, codeResource);
-						try {
-							Domain featureDomain = Domain.valueOf(tokens[1]); // Will throw InvalidArgumentExpression if input string does not match
-							if (featureDomain == Domain.ENSEIGNEMENT) {
-								codeResource.addProperty(RDF.type, BPEOnto.CaractereEnseignement);
-								educationCollectionResource.addProperty(SKOS.member, codeResource);
-							}
-							if (featureDomain == Domain.SPORT_LOISIR) {
-								codeResource.addProperty(RDF.type, BPEOnto.CaractereSportLoisir);
-								sportLeisureCollectionResource.addProperty(SKOS.member, codeResource);
-							}
-						} catch (Exception ignored) {}
-                    }
-                }
-            });
+        	lines.forEach(line -> {
+				String[] tokens = line.split("\t");
+				if (tokens.length == 3) {
+					String featureCode = tokens[0];
+					Resource codeResource = codeListModel.createResource(Configuration.inseeFeatureURI(featureCode), SKOS.Concept);
+					codeResource.addProperty(RDF.type, BPEOnto.Caractere); // The codes are instances of the code concept class
+					codeResource.addProperty(SKOS.notation, featureCode);
+					codeResource.addProperty(SKOS.prefLabel, codeListModel.createLiteral(tokens[2], "fr"));
+					codeResource.addProperty(SKOS.inScheme, schemeResource);
+					schemeResource.addProperty(SKOS.hasTopConcept, codeResource);
+					try {
+						Domain featureDomain = Domain.valueOf(tokens[1]); // Will throw InvalidArgumentExpression if input string does not match
+						if (featureDomain == Domain.ENSEIGNEMENT) {
+							codeResource.addProperty(RDF.type, BPEOnto.CaractereEnseignement);
+							educationCollectionResource.addProperty(SKOS.member, codeResource);
+						}
+						if (featureDomain == Domain.SPORT_LOISIR) {
+							codeResource.addProperty(RDF.type, BPEOnto.CaractereSportLoisir);
+							sportLeisureCollectionResource.addProperty(SKOS.member, codeResource);
+						}
+					} catch (Exception ignored) {}
+				}
+			});
 		} catch (Exception e) {
 			logger.error("Error processing file - " + e.getMessage());
 		}
@@ -190,8 +181,10 @@ public class CodelistModelMaker {
 		schemeResource.addProperty(SKOS.notation, "CL_SECTEURS");
 		schemeResource.addProperty(SKOS.prefLabel, codeListModel.createLiteral("Education sectors", "en"));
 		schemeResource.addProperty(SKOS.prefLabel, codeListModel.createLiteral("Secteurs d'éducation", "fr"));
-		// Create also the class representing the code values (see Data Cube §8.1)
-		schemeResource.addProperty(RDFS.seeAlso, BPEOnto.Secteur);  // Add a reference from the scheme to the Secteur class
+		// Create also the class representing the code values (see Data Cube §8.1) and add cross-references to and from the scheme
+		Resource classResource = codeListModel.createResource(BPEOnto.Secteur.getURI(), OWL.Class);
+		classResource.addProperty(RDFS.seeAlso, schemeResource);
+		schemeResource.addProperty(RDFS.seeAlso, classResource);
 
     	Resource codeResource = codeListModel.createResource(Configuration.inseeSectorURI("PR"), SKOS.Concept);
 		codeResource.addProperty(RDF.type, BPEOnto.Secteur); // The codes are instances of the code concept class
@@ -282,7 +275,7 @@ public class CodelistModelMaker {
 	 */
 	public static Map<String, String> readEquipmentTypesDBF() {
 
-		Map<String, String> equipmentTypes = new HashMap<String, String>();
+		Map<String, String> equipmentTypes = new HashMap<>();
 
 		Path codelistFilePath = Configuration.getBDFTypesCodelistFilePath(Domain.ENSEMBLE);
 		DbfRecord record = null;
@@ -330,17 +323,17 @@ public class CodelistModelMaker {
 	 * 
 	 * @throws IOException In case of problem reading the input or writing the output.
 	 */
-	public static void orderCodeList(Path unorderedIn, Path orderedOut) throws IOException, IOException {
+	public static void orderCodeList(Path unorderedIn, Path orderedOut) throws IOException {
 
 		logger.info("Reordering of code list in Turtle file " + unorderedIn);
 
-		List<String> chunks = new ArrayList<String>();
-		Map<CodeListComponent, List<Integer>> indexes = new HashMap<CodeListComponent, List<Integer>>();
-		for (CodeListComponent composant : CodeListComponent.values()) indexes.put(composant, new ArrayList<Integer>());
+		List<String> chunks = new ArrayList<>();
+		Map<CodeListComponent, List<Integer>> indexes = new HashMap<>();
+		for (CodeListComponent composant : CodeListComponent.values()) indexes.put(composant, new ArrayList<>());
 
 		try (BufferedReader reader = new BufferedReader(new FileReader(unorderedIn.toFile()))) {
 			StringBuilder chunk = new StringBuilder();
-			String line = "";
+			String line;
 			do {
 				line = reader.readLine();
 				if ((line != null) && (line.trim().length() > 0)) chunk.append(line).append(System.lineSeparator());
@@ -378,7 +371,7 @@ public class CodelistModelMaker {
 				writer.newLine();
 			}
 			// Sort concepts and write them
-			SortedSet<String> orderedConcepts = new TreeSet<String>();
+			SortedSet<String> orderedConcepts = new TreeSet<>();
 			for (int index : indexes.get(CodeListComponent.CONCEPT)) orderedConcepts.add(chunks.get(index));
 			for (String concept : orderedConcepts) {
 				writer.write(concept);
