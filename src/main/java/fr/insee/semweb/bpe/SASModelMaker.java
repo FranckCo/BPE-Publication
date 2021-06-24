@@ -34,7 +34,7 @@ import fr.insee.semweb.bpe.Configuration.QualityLevel;
  * 
  * @author Franck
  */
-public class SASModelMaker {
+public class SASModelMaker extends BPEModelMaker {
 
 	public static Logger logger = LogManager.getLogger(SASModelMaker.class);
 
@@ -42,7 +42,6 @@ public class SASModelMaker {
 
 	final static Long LINES_TO_READ = 0L; // Zero means read all lines
 	final static int LOGGING_STEP = 10000; // Should be strictly positive
-	final static String DEFAULT_FILTER = "E102"; // Will only produce equipment whose type starts with the filter (set to empty for all equipments)
 
 	/**
 	 * Creates the BPE model with a custom filter on the type of equipments.
@@ -51,7 +50,8 @@ public class SASModelMaker {
 	 * @return The BPE extract as a Jena model.
 	 * @throws IOException In case of problem reading the database.
 	 */
-	public static Model makeBPEModel(Predicate<String> typeFilter) throws IOException {
+	@Override
+	public Model makeBPEModel(Predicate<String> typeFilter) throws IOException {
 
 		SasFileReader sasFileReader = new SasFileReaderImpl(new FileInputStream(Configuration.getSASDataFilePath().toString()));
 		// Build the map of column indexes
@@ -172,19 +172,6 @@ public class SASModelMaker {
 	}
 
 	/**
-	 * Creates the BPE main model with the default filter on the type of equipments.
-	 * The default filter is specified by the DEFAULT_FILTER constant.
-	 * 
-	 * @return The BPE extract as a Jena model.
-	 * @throws IOException In case of problem reading the database.
-	 */
-	public static Model makeBPEModel() throws IOException {
-
-		return makeBPEModel(type -> type.startsWith(DEFAULT_FILTER));
-	}
-
-
-	/**
 	 * Creates the BPE quality model with a custom filter on the type of equipments.
 	 * See https://www.w3.org/TR/vocab-dqv/#expressQualityClassification.
 	 * 
@@ -192,7 +179,7 @@ public class SASModelMaker {
 	 * @return The BPE quality extract as a Jena model.
 	 * @throws IOException In case of problem reading the database.
 	 */
-	public static Model makeQualityModel(Predicate<String> typeFilter) throws IOException {
+	public Model makeQualityModel(Predicate<String> typeFilter) throws IOException {
 
 		SasFileReader sasFileReader = new SasFileReaderImpl(new FileInputStream(Configuration.getSASDataFilePath().toString()));
 		// Build the map of column indexes
@@ -239,17 +226,5 @@ public class SASModelMaker {
 		}
 
 		return qualityModel;
-	}
-
-	/**
-	 * Creates the BPE quality model with the default filter on the type of equipments.
-	 * The default filter is specified by the DEFAULT_FILTER constant.
-	 * 
-	 * @return The BPE quality extract as a Jena model.
-	 * @throws IOException In case of problem reading the database.
-	 */
-	public static Model makeQualityModel() throws IOException {
-
-		return makeQualityModel(type -> type.startsWith(DEFAULT_FILTER));
 	}
 }

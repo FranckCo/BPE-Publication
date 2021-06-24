@@ -9,10 +9,12 @@ import fr.insee.semweb.bpe.SASModelMaker;
 
 public class SASModelMakerTest {
 
+	SASModelMaker sasModelMaker = new SASModelMaker();
+
 	@Test
 	public void testMakeBPEModel() throws Exception {
 
-		Model equipments = SASModelMaker.makeBPEModel();
+		Model equipments = sasModelMaker.makeBPEModel();
 		equipments.write(new FileWriter("src/main/resources/data/equipments.ttl"), "TTL");
 	}
 
@@ -20,14 +22,14 @@ public class SASModelMakerTest {
 	public void testMakeBPEModelFilter() throws Exception {
 
 		String filter = "D2";
-		Model equipments = SASModelMaker.makeBPEModel(type -> type.startsWith(filter));
+		Model equipments = sasModelMaker.makeBPEModel(type -> type.startsWith(filter));
 		equipments.write(new FileWriter("src/main/resources/data/equipments-" + filter.toLowerCase() + ".ttl"), "TTL");
 	}
 
 	@Test
 	public void testMakeQualityModel() throws Exception {
 
-		Model quality = SASModelMaker.makeQualityModel();
+		Model quality = sasModelMaker.makeQualityModel();
 		quality.write(new FileWriter("src/main/resources/data/quality.ttl"), "TTL");
 	}
 }

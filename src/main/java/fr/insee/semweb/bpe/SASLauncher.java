@@ -28,6 +28,8 @@ public class SASLauncher {
 	 */
 	public static void main(String... args) throws Exception {
 
+		SASModelMaker sasModelMaker = new SASModelMaker();
+
 		// The following parameters should be set before launching the process
 		final int SLEEP_DURATION = 20 * 1000; // Length of pause before starting the next chunk
 		boolean CREATE_MAIN_MODEL = true; // Create the main model if true
@@ -60,7 +62,7 @@ public class SASLauncher {
 		if (CREATE_MAIN_MODEL) {
 			for (String chunk : chunks) {
 				logger.info("Launching main model creation for filter " + chunk);
-				Model equipments = SASModelMaker.makeBPEModel(predicates.get(chunk));
+				Model equipments = sasModelMaker.makeBPEModel(predicates.get(chunk));
 				equipments.write(new FileWriter("src/main/resources/data/facilities-" + chunk.toLowerCase() + ".ttl"), "TTL");
 				logger.info("Model created for filter " + chunk + " with " + equipments.size() + " triples");
 				tripleCount += equipments.size();
@@ -74,7 +76,7 @@ public class SASLauncher {
 			int modelCount = chunks.size();
 			for (String chunk : chunks) {
 				logger.info("Launching quality model creation for filter " + chunk);
-				Model quality = SASModelMaker.makeQualityModel(predicates.get(chunk));
+				Model quality = sasModelMaker.makeQualityModel(predicates.get(chunk));
 				if (quality.size() > 0) {
 					quality.write(new FileWriter("src/main/resources/data/geo-quality-" + chunk.toLowerCase() + ".ttl"), "TTL");
 					logger.info("Quality model created for filter " + chunk + " with " + quality.size() + " triples");
