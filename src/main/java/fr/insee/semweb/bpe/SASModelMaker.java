@@ -77,7 +77,7 @@ public class SASModelMaker {
 		long linesToRead = sasFileReader.getSasFileProperties().getRowCount();
 		if ((LINES_TO_READ > 0) && (LINES_TO_READ < linesToRead)) linesToRead = LINES_TO_READ;
 		long equipmentCreated = 0L;
-		logger.debug("Reading " + linesToRead + " lines from " + Configuration.getSASDataFilePath().toString() + " to create BPE model");
+		logger.debug("Reading " + linesToRead + " lines from " + Configuration.getSASDataFilePath() + " to create BPE model");
 		for (long line = 0; line < linesToRead; line++) {
 			if (line % LOGGING_STEP == 1) logger.debug("About to process line number " + line);
 			Object[] values = sasFileReader.readNext();
@@ -108,7 +108,7 @@ public class SASModelMaker {
 			SortedSet<String> featuresAndProperties = featuresAndPropertiesByType.get(equipmentType);
 			if (featuresAndProperties != null) { // Would be null if no specialized features or properties for this type
 				for (String column : featuresAndProperties) {
-					if (column == null) continue; // No specialize
+					if (column == null) continue; // Not specialized
 					Object columnValue = values[colIndexes.get(column)];
 					if (columnValue == null) {
 						// Data checks indicate that this does not happen for 2018
@@ -163,7 +163,7 @@ public class SASModelMaker {
 					geometryResource.addProperty(GeoSPARQL.asWKT, bpeModel.createTypedLiteral(wktLiteral, GeoSPARQL.wktLiteral));
 					equipmentResource.addProperty(GeoSPARQL.hasGeometry, geometryResource);
 				}
-				else {} // For now, we don't do anything in that case
+				// For now, we don't do anything in the 'else' case
 			}
 			if (++equipmentCreated % LOGGING_STEP == 1) logger.debug("Just created equipment number " + equipmentCreated);
 		}
@@ -208,7 +208,7 @@ public class SASModelMaker {
 
 		long linesToRead = sasFileReader.getSasFileProperties().getRowCount();
 		if ((LINES_TO_READ > 0) && (LINES_TO_READ < linesToRead)) linesToRead = LINES_TO_READ;
-		logger.debug("Reading " + linesToRead + " lines from " + Configuration.getSASDataFilePath().toString() + " to create quality model");
+		logger.debug("Reading " + linesToRead + " lines from " + Configuration.getSASDataFilePath() + " to create quality model");
 		for (int line = 0; line < linesToRead; line++) {
 			if (line % LOGGING_STEP == 1) logger.debug("About to process line number " + line);
 			Object[] values = sasFileReader.readNext();
@@ -216,7 +216,7 @@ public class SASModelMaker {
 			String equipmentType = values[colIndexes.get("typequ")].toString().trim();
 			if (!typeFilter.test(equipmentType)) continue;
 			// Get the value of the quality level
-			QualityLevel qualityLevelValue = null;
+			QualityLevel qualityLevelValue;
 			try {
 				qualityLevelValue = QualityLevel.valueOf(values[colIndexes.get("qualite_xy")].toString().trim().toUpperCase());
 			} catch (IllegalArgumentException e) {
@@ -227,7 +227,7 @@ public class SASModelMaker {
 			// Equipment identifier is first column + second column
 			String equipmentId = values[colIndexes.get("idetab")].toString().trim() + values[colIndexes.get("idservice")].toString().trim();
 			// The quality annotation target is the equipment or the geometry itself
-			Resource targetResource = null;
+			Resource targetResource;
 			if (Configuration.CREATE_GEOMETRY) targetResource = qualityModel.createResource(Configuration.inseeEquipmentGeometryURI(equipmentId));
 			else targetResource = qualityModel.createResource(Configuration.inseeEquipmentURI(equipmentId));
 			// Create annotation instance

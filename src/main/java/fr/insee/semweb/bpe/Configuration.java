@@ -1,20 +1,14 @@
 package fr.insee.semweb.bpe;
 
-import java.nio.charset.Charset;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.lang3.StringUtils;
-import org.apache.jena.datatypes.BaseDatatype;
-import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.ontology.OntProperty;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+
+import java.nio.charset.Charset;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 
 public class Configuration {
 
@@ -31,7 +25,7 @@ public class Configuration {
 
 	
 	/** Mappings between feature markers and OWL properties */
-	public static Map<String, OntProperty> featurePresence = new HashMap<String, OntProperty>();
+	public static Map<String, OntProperty> featurePresence = new HashMap<>();
 	static {
 		Configuration.featurePresence.put("0", BPEOnto.caractereAbsent);
 		Configuration.featurePresence.put("1", BPEOnto.caracterePresent);
@@ -60,7 +54,7 @@ public class Configuration {
 	/** Returns the paths of the dBase files (data and configuration) for a given domain */
 	public static Map<Path, Boolean> getDBFFilePaths(Domain domain) {
 
-		Map<Path, Boolean> paths = new HashMap<Path, Boolean>();
+		Map<Path, Boolean> paths = new HashMap<>();
 		paths.put(DATA_RESOURCE_PATH.resolve("bpe_" + domain + "_xy.dbf"), true); // sampled
 		paths.put(DATA_RESOURCE_PATH.resolve("varlist_" + domain + "_xy.dbf"), false);
 		paths.put(DATA_RESOURCE_PATH.resolve("varmod_" + domain + "_xy.dbf"), false);
@@ -86,11 +80,11 @@ public class Configuration {
 	}
 
 	/** Names of the SAS variables corresponding to the main features in the different domains */
-	static Map<Domain, List<String>> sasFeatures = new HashMap<Domain, List<String>>();
+	static Map<Domain, List<String>> sasFeatures = new HashMap<>();
 	static {
 		sasFeatures.put(Domain.ENSEIGNEMENT, Arrays.asList("cantine", "internat", "rpic", "cl_pelem", "cl_pge", "ep"));
 		sasFeatures.put(Domain.SPORT_LOISIR, Arrays.asList("couvert", "eclaire"));
-		sasFeatures.put(Domain.ENSEMBLE, new ArrayList<String>());
+		sasFeatures.put(Domain.ENSEMBLE, new ArrayList<>());
 	}
 
 	// Naming
@@ -182,10 +176,7 @@ public class Configuration {
 		return ((equipmentType != null) && (equipmentType.startsWith("C") || equipmentType.startsWith("F")));
 	}
 
-	/** RDF data type for the WKT literal */
-	public static RDFDatatype WKT_DATA_TYPE = new BaseDatatype("http://www.opengis.net/ont/geosparql#wktLiteral");
-
-	/** 
+	/**
 	 * Return the value of the WKT literal representing a point in a given municipality.
 	 * 
 	 * See example at https://www.w3.org/2015/spatial/wiki/Coordinate_Reference_Systems.
@@ -216,7 +207,7 @@ public class Configuration {
 	    ENSEIGNEMENT("enseignement"),
 	    SPORT_LOISIR("sport_loisir");
 	
-	    private String domain;
+	    private final String domain;
 	
 	    Domain(String domain) {
 	        this.domain = domain;
@@ -224,10 +215,10 @@ public class Configuration {
 
 	    public String toCamelCase() {
 
-	    	String result = "";
+	    	StringBuilder result = new StringBuilder();
 	    	String[] tokens = this.domain.split("_");
-	    	for (String token : tokens) result += StringUtils.capitalize(token);
-	    	return result;
+	    	for (String token : tokens) result.append(StringUtils.capitalize(token));
+	    	return result.toString();
 	    }
 	}
 
@@ -238,8 +229,8 @@ public class Configuration {
 	    ACCEPTABLE("Acceptable", "ACCEPTABLE"),
 	    MAUVAISE("Mauvaise", "MAUVAIS");
 
-	    private String label;
-	    private String code;
+	    private final String label;
+	    private final String code;
 	
 	    QualityLevel(String level, String code) {
 	        this.label = level;
@@ -253,7 +244,7 @@ public class Configuration {
 
 	    public static Map<QualityLevel, Resource> RESOURCE_MAP;
 	    static {
-	    	RESOURCE_MAP = new HashMap<QualityLevel, Resource>();
+	    	RESOURCE_MAP = new HashMap<>();
 	    	RESOURCE_MAP.put(MAUVAISE, ResourceFactory.createResource(inseeQualityLevelURI("MAUVAIS")));
 	    	RESOURCE_MAP.put(ACCEPTABLE, ResourceFactory.createResource(inseeQualityLevelURI("ACCEPTABLE")));
 	    	RESOURCE_MAP.put(BONNE, ResourceFactory.createResource(inseeQualityLevelURI("BON")));
