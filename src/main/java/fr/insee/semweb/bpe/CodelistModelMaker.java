@@ -20,6 +20,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import fr.insee.semweb.bpe.Configuration.QualityLevel;
+
 public class CodelistModelMaker {
 
 	public static Logger logger = LogManager.getLogger(CodelistModelMaker.class);
@@ -231,27 +233,15 @@ public class CodelistModelMaker {
 		classResource.addProperty(RDFS.seeAlso, schemeResource);
 
 		// Add the three modalities used in the BPE datasets
-    	Resource codeResource = codeListModel.createResource(Configuration.inseeQualityLevelURI("BON"), SKOS.Concept);
-		codeResource.addProperty(RDF.type, classResource); // The codes are instances of the code concept class
-		codeResource.addProperty(SKOS.notation, "BON");
-		codeResource.addProperty(SKOS.prefLabel, codeListModel.createLiteral("Bon", "fr"));
-		codeResource.addProperty(SKOS.prefLabel, codeListModel.createLiteral("Good", "en"));
-		codeResource.addProperty(SKOS.inScheme, schemeResource);
-		schemeResource.addProperty(SKOS.hasTopConcept, codeResource);
-		codeResource = codeListModel.createResource(Configuration.inseeQualityLevelURI("ACCEPTABLE"), SKOS.Concept);
-		codeResource.addProperty(RDF.type, classResource);
-		codeResource.addProperty(SKOS.notation, "ACCEPTABLE");
-		codeResource.addProperty(SKOS.prefLabel, codeListModel.createLiteral("Acceptable", "fr"));
-		codeResource.addProperty(SKOS.prefLabel, codeListModel.createLiteral("Acceptable", "en"));
-		codeResource.addProperty(SKOS.inScheme, schemeResource);
-		schemeResource.addProperty(SKOS.hasTopConcept, codeResource);
-		codeResource = codeListModel.createResource(Configuration.inseeQualityLevelURI("MAUVAIS"), SKOS.Concept);
-		codeResource.addProperty(RDF.type, classResource);
-		codeResource.addProperty(SKOS.notation, "MAUVAIS");
-		codeResource.addProperty(SKOS.prefLabel, codeListModel.createLiteral("Mauvais", "fr"));
-		codeResource.addProperty(SKOS.prefLabel, codeListModel.createLiteral("Bad", "en"));
-		codeResource.addProperty(SKOS.inScheme, schemeResource);
-		schemeResource.addProperty(SKOS.hasTopConcept, codeResource);
+		for (QualityLevel qualityLevel : QualityLevel.values()) {
+			Resource codeResource = codeListModel.createResource(Configuration.inseeQualityLevelURI(qualityLevel.getCode()), SKOS.Concept);
+			codeResource.addProperty(RDF.type, classResource); // The codes are instances of the code concept class
+			codeResource.addProperty(SKOS.notation, qualityLevel.getCode());
+			codeResource.addProperty(SKOS.prefLabel, codeListModel.createLiteral(qualityLevel.getLabel("fr"), "fr"));
+			codeResource.addProperty(SKOS.prefLabel, codeListModel.createLiteral(qualityLevel.getLabel("en"), "en"));
+			codeResource.addProperty(SKOS.inScheme, schemeResource);
+			schemeResource.addProperty(SKOS.hasTopConcept, codeResource);
+		}
 
 		return codeListModel;
 	}

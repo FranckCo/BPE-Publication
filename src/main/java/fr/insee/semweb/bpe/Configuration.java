@@ -224,35 +224,40 @@ public class Configuration {
 
 	/** Enumeration of quality levels */
 	public enum QualityLevel {
-		
-	    BONNE("Bonne", "BON"),
-	    ACCEPTABLE("Acceptable", "ACCEPTABLE"),
-	    MAUVAISE("Mauvaise", "MAUVAIS");
 
-	    private final String label;
+	    BONNE("BON", "Bon", "Good"),
+	    ACCEPTABLE("ACCEPTABLE", "Acceptable", "Acceptable"),
+	    MAUVAISE("MAUVAIS", "Mauvais", "Bad");
+
 	    private final String code;
+		private final String labelFr;
+		private final String labelEn;
 	
-	    QualityLevel(String level, String code) {
-	        this.label = level;
-	        this.code = code;
+	    QualityLevel(String code, String labelFr, String labelEn) {
+			this.code = code;
+	        this.labelFr = labelFr;
+	        this.labelEn = labelEn;
 	    }
 
-	    public String toURI() {
+		public String getCode() {
+			return code;
+		}
 
+		public String getLabel(String language) {
+			if ("fr".equals(language)) return labelFr;
+			if ("en".equals(language)) return labelEn;
+			return null;
+		}
+
+		public String getURI() {
 	    	return inseeQualityLevelURI(this.code);
 	    }
 
 	    public static Map<QualityLevel, Resource> RESOURCE_MAP;
 	    static {
 	    	RESOURCE_MAP = new HashMap<>();
-	    	RESOURCE_MAP.put(MAUVAISE, ResourceFactory.createResource(inseeQualityLevelURI("MAUVAIS")));
-	    	RESOURCE_MAP.put(ACCEPTABLE, ResourceFactory.createResource(inseeQualityLevelURI("ACCEPTABLE")));
-	    	RESOURCE_MAP.put(BONNE, ResourceFactory.createResource(inseeQualityLevelURI("BON")));
-	    }
-
-	    @Override
-	    public String toString() {
-	        return this.label;
+	    	for (QualityLevel qualityLevel : QualityLevel.values())
+				RESOURCE_MAP.put(qualityLevel, ResourceFactory.createResource(inseeQualityLevelURI(qualityLevel.code)));
 	    }
 	}
 }

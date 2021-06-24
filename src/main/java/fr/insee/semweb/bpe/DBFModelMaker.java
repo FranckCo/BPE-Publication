@@ -215,7 +215,7 @@ public class DBFModelMaker {
 						String equipmentCode = String.valueOf(record.getRecordNumber());
 						if (Configuration.CREATE_GEOMETRY) targetResource = qualityModel.createResource(Configuration.inseeEquipmentGeometryURI(equipmentCode));
 						else targetResource = qualityModel.createResource(Configuration.inseeEquipmentURI(equipmentCode));
-						Resource qualityLevelResource = qualityModel.createResource(qualityLevelValue.toURI());
+						Resource qualityLevelResource = qualityModel.createResource(qualityLevelValue.getURI());
 						if (Configuration.QUALITY_ANNOTATIONS) {
 							// Create annotation instance
 							Resource qualityAnnotationResource = qualityModel.createResource(Configuration.inseeGeometryQualityAnnotationURI(equipmentCode), DQV.QualityAnnotation);

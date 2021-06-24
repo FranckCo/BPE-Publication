@@ -73,4 +73,9 @@ public class CodelistModelMakerTest {
 		Path orderedCodeListPath = Configuration.DATA_RESOURCE_PATH.resolve(codeListName + "-ord.ttl");
 		CodelistModelMaker.orderCodeList(codeListPath, orderedCodeListPath);
 	}
+
+	@Test
+	public void testQE() {
+		System.out.println(Configuration.QualityLevel.RESOURCE_MAP);
+	}
 }
