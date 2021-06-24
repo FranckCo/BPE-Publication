@@ -5,10 +5,14 @@ import org.apache.jena.ontology.OntProperty;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 public class Configuration {
 
@@ -198,6 +202,32 @@ public class Configuration {
 		if (equipmentType.startsWith("C")) return Domain.ENSEIGNEMENT;
 		if (equipmentType.startsWith("F")) return Domain.SPORT_LOISIR;
 		return Domain.ENSEMBLE;
+	}
+
+	/**
+	 * Returns the list of features and properties defined for each type of equipments.
+	 * This method essentially reads the TSV file which contains the base information.
+	 *
+	 * @return A map indexed by equipment types, each value being the sorted list of relevant features and properties.
+	 */
+	public static SortedMap<String, SortedSet<String>> listFeaturesAndPropertiesByType() {
+
+		SortedMap<String, SortedSet<String>> featuresAndProperties = new TreeMap<>();
+		try (Stream<String> stream = Files.lines(getFeaturesByTypesFilePath())) {
+			stream.filter(line -> !line.startsWith("#")).forEach(new Consumer<String>() {
+				@Override
+				public void accept(String line) {
+					String[] components = line.split("\t");
+					String type = components[0];
+					if (!featuresAndProperties.containsKey(type)) featuresAndProperties.put(type, new TreeSet<>());
+					featuresAndProperties.get(type).addAll(Arrays.asList(components[1].split(" \\+ ")));
+				}
+			});
+		} catch (IOException e) {
+			return null;
+		}
+
+		return featuresAndProperties;
 	}
 
 	/** Enumeration of high-level domains */

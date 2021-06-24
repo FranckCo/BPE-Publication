@@ -22,6 +22,11 @@ import java.util.stream.Stream;
 
 import fr.insee.semweb.bpe.Configuration.QualityLevel;
 
+/**
+ * <code>CodelistModelMaker</code> creates Jena models corresponding to the code lists used in the BPE.
+ *
+ * @author Franck
+ */
 public class CodelistModelMaker {
 
 	public static Logger logger = LogManager.getLogger(CodelistModelMaker.class);

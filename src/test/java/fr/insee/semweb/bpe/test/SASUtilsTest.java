@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.SortedSet;
 
+import fr.insee.semweb.bpe.Configuration;
 import org.junit.jupiter.api.Test;
 
 import com.epam.parso.Column;
@@ -31,7 +32,7 @@ public class SASUtilsTest {
 
 	@Test
 	public void testListFeaturesAndPropertiesByType() {
-		SortedMap<String, SortedSet<String>> featuresAndProperties = SASUtils.listFeaturesAndPropertiesByType();
+		SortedMap<String, SortedSet<String>> featuresAndProperties = Configuration.listFeaturesAndPropertiesByType();
 		for (String type : featuresAndProperties.keySet()) {
 			System.out.println(type + "\t" + featuresAndProperties.get(type));
 		}

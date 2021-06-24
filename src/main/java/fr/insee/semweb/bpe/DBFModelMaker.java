@@ -22,6 +22,13 @@ import fr.insee.semweb.bpe.Configuration.QualityLevel;
 import net.iryndin.jdbf.core.DbfRecord;
 import net.iryndin.jdbf.reader.DbfReader;
 
+/**
+ * <code>DBFModelMaker</code> creates the BPE data and quality Jena models from the dBase files.
+ *
+ * The BPE is now published as CSV, so this class should not be used anymore.
+ *
+ * @author Franck
+ */
 public class DBFModelMaker {
 
 	public static Logger logger = LogManager.getLogger(DBFModelMaker.class);

@@ -30,7 +30,7 @@ import fr.insee.semweb.bpe.Configuration.Domain;
 import fr.insee.semweb.bpe.Configuration.QualityLevel;
 
 /**
- * Creates the BPE data and quality Jena models from the SAS database.
+ * <code>SASModelMaker</code> creates the BPE data and quality Jena models from the SAS database.
  * 
  * @author Franck
  */
@@ -60,7 +60,7 @@ public class SASModelMaker {
 		for (Column column : sasFileReader.getColumns()) colIndexes.put(column.getName().toLowerCase(), index++);
 
 		// Read the list of columns to process for each type of equipment
-		SortedMap<String, SortedSet<String>> featuresAndPropertiesByType = SASUtils.listFeaturesAndPropertiesByType();
+		SortedMap<String, SortedSet<String>> featuresAndPropertiesByType = Configuration.listFeaturesAndPropertiesByType();
 
 		Model bpeModel = ModelFactory.createDefaultModel();
 		bpeModel.setNsPrefix("dcterms", DCTerms.getURI());

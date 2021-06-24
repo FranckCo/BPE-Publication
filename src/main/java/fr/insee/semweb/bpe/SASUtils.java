@@ -11,10 +11,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 /**
  * Performs counts and checks on the BPE SAS database.
@@ -26,39 +23,13 @@ public class SASUtils {
 	public static Logger logger = LogManager.getLogger(SASUtils.class);
 
 	/**
-	 * Returns the list of features and properties defined for each type of equipments.
-	 * This method essentially reads the TSV file which contains the base information.
-	 * 
-	 * @return A map indexed by equipment types, each value being the sorted list of relevant features and properties.
-	 */
-	public static SortedMap<String, SortedSet<String>> listFeaturesAndPropertiesByType() {
-
-		SortedMap<String, SortedSet<String>> featuresAndProperties = new TreeMap<>();
-		try (Stream<String> stream = Files.lines(Configuration.getFeaturesByTypesFilePath())) {
-			stream.filter(line -> !line.startsWith("#")).forEach(new Consumer<String>() {
-				@Override
-				public void accept(String line) {
-					String[] components = line.split("\t");
-					String type = components[0];
-					if (!featuresAndProperties.containsKey(type)) featuresAndProperties.put(type, new TreeSet<>());
-					featuresAndProperties.get(type).addAll(Arrays.asList(components[1].split(" \\+ ")));
-				}
-			});
-		} catch (IOException e) {
-			return null;
-		}
-
-		return featuresAndProperties;
-	}
-
-	/**
 	 * Checks that the values of columns for expected features and properties are not null.
 	 * 
 	 * @throws IOException In case of problem reading the database.
 	 */
 	public static void checkFeaturesAndProperties() throws IOException {
 
-		SortedMap<String, SortedSet<String>> featuresAndPropertiesByType = listFeaturesAndPropertiesByType();
+		SortedMap<String, SortedSet<String>> featuresAndPropertiesByType = Configuration.listFeaturesAndPropertiesByType();
 
 		SasFileReader sasFileReader = new SasFileReaderImpl(new FileInputStream(Configuration.getSASDataFilePath().toString()));
 		// Build the map of column indexes
