@@ -55,7 +55,7 @@ public class SASModelMaker {
 
 		SasFileReader sasFileReader = new SasFileReaderImpl(new FileInputStream(Configuration.getSASDataFilePath().toString()));
 		// Build the map of column indexes
-		Map<String, Integer> colIndexes = new HashMap<String, Integer>();
+		Map<String, Integer> colIndexes = new HashMap<>();
 		int index = 0;
 		for (Column column : sasFileReader.getColumns()) colIndexes.put(column.getName().toLowerCase(), index++);
 
@@ -88,7 +88,7 @@ public class SASModelMaker {
 			if (!typeFilter.test(equipmentType)) continue;
  
 			// Create equipment resource with relevant types
-			Resource equipmentResource = bpeModel.createResource(Configuration.inseeEquipmentURI(String.valueOf(equipmentId)), BPEOnto.Equipement);
+			Resource equipmentResource = bpeModel.createResource(Configuration.inseeEquipmentURI(equipmentId), BPEOnto.Equipement);
 			equipmentResource.addProperty(DCTerms.type, bpeModel.createResource(Configuration.inseeEquipmentTypeURI(equipmentType)));
 			Domain equipmentDomain = Configuration.getDomain(equipmentType);
 			if (equipmentDomain == Domain.ENSEIGNEMENT) {
@@ -196,7 +196,7 @@ public class SASModelMaker {
 
 		SasFileReader sasFileReader = new SasFileReaderImpl(new FileInputStream(Configuration.getSASDataFilePath().toString()));
 		// Build the map of column indexes
-		Map<String, Integer> colIndexes = new HashMap<String, Integer>();
+		Map<String, Integer> colIndexes = new HashMap<>();
 		int index = 0;
 		for (Column column : sasFileReader.getColumns()) colIndexes.put(column.getName().toLowerCase(), index++);
 

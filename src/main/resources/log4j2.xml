@@ -6,7 +6,7 @@
 				<Pattern>%d{yyyy-MM-dd HH:mm:ss} - %r [%t] %-5p %c{1} - %m%n</Pattern>
 			</PatternLayout>
 		</Console>
-		<File name="DebugLog" fileName="logs/publication-bpe.log">
+		<File name="File" fileName="logs/publication-bpe.log">
 			<PatternLayout>
 				<Pattern>%d{yyyy-MM-dd HH:mm:ss} - %r [%t] %-5p %c{1} \t %m%n</Pattern>
 			</PatternLayout>
@@ -14,9 +14,9 @@
 	</Appenders>
 	<Loggers>
 		<Logger name="fr.insee.semweb.bpe" level="DEBUG" additivity="false">
-			<Appender-Ref ref="DebugLog"/>
+			<Appender-Ref ref="File"/>
 		</Logger>
-		<Root level="error">
+		<Root level="INFO">
 			<Appender-Ref ref="Console"/>
 		</Root>
 	</Loggers>
