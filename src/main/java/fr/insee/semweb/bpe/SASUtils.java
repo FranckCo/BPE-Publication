@@ -1,37 +1,23 @@
 package fr.insee.semweb.bpe;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.nio.file.Files;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.SortedSet;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.epam.parso.CSVDataWriter;
 import com.epam.parso.Column;
 import com.epam.parso.SasFileProperties;
 import com.epam.parso.SasFileReader;
 import com.epam.parso.impl.CSVDataWriterImpl;
 import com.epam.parso.impl.SasFileReaderImpl;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 /**
- * Performs countings and checks on the BPE SAS database.
+ * Performs counts and checks on the BPE SAS database.
  * 
  * @author Franck
  */
@@ -39,24 +25,22 @@ public class SASUtils {
 
 	public static Logger logger = LogManager.getLogger(SASUtils.class);
 
-	static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-
 	/**
 	 * Returns the list of features and properties defined for each type of equipments.
-	 * This method essentially reads the TSV file which cotains the base information.
+	 * This method essentially reads the TSV file which contains the base information.
 	 * 
 	 * @return A map indexed by equipment types, each value being the sorted list of relevant features and properties.
 	 */
 	public static SortedMap<String, SortedSet<String>> listFeaturesAndPropertiesByType() {
 
-		SortedMap<String, SortedSet<String>> featuresAndProperties = new TreeMap<String, SortedSet<String>>();
+		SortedMap<String, SortedSet<String>> featuresAndProperties = new TreeMap<>();
 		try (Stream<String> stream = Files.lines(Configuration.getFeaturesByTypesFilePath())) {
 			stream.filter(line -> !line.startsWith("#")).forEach(new Consumer<String>() {
 				@Override
 				public void accept(String line) {
 					String[] components = line.split("\t");
 					String type = components[0];
-					if (!featuresAndProperties.containsKey(type)) featuresAndProperties.put(type, new TreeSet<String>());
+					if (!featuresAndProperties.containsKey(type)) featuresAndProperties.put(type, new TreeSet<>());
 					featuresAndProperties.get(type).addAll(Arrays.asList(components[1].split(" \\+ ")));
 				}
 			});
@@ -78,7 +62,7 @@ public class SASUtils {
 
 		SasFileReader sasFileReader = new SasFileReaderImpl(new FileInputStream(Configuration.getSASDataFilePath().toString()));
 		// Build the map of column indexes
-		Map<String, Integer> colIndexes = new HashMap<String, Integer>();
+		Map<String, Integer> colIndexes = new HashMap<>();
 		int index = 0;
 		for (Column column : sasFileReader.getColumns()) colIndexes.put(column.getName().toLowerCase(), index++);
 		long linesToRead = sasFileReader.getSasFileProperties().getRowCount();
@@ -110,7 +94,7 @@ public class SASUtils {
 
 		SasFileReader sasFileReader = new SasFileReaderImpl(new FileInputStream(Configuration.getSASDataFilePath().toString()));
 		// Build the map of columns by indexes
-		Map<Integer, Column> columns = new HashMap<Integer, Column>();
+		Map<Integer, Column> columns = new HashMap<>();
 		int index = 0;
 		for (Column column : sasFileReader.getColumns()) columns.put(index++, column);
 
@@ -126,7 +110,7 @@ public class SASUtils {
 
 		SasFileReader sasFileReader = new SasFileReaderImpl(new FileInputStream(Configuration.getSASDataFilePath().toString()));
 		// Build the map of column indexes
-		Map<String, Integer> colIndexes = new HashMap<String, Integer>();
+		Map<String, Integer> colIndexes = new HashMap<>();
 		int index = 0;
 		for (Column column : sasFileReader.getColumns()) colIndexes.put(column.getName().toLowerCase(), index++);
 		long linesToRead = sasFileReader.getSasFileProperties().getRowCount();
@@ -164,14 +148,14 @@ public class SASUtils {
 
 		SasFileReader sasFileReader = new SasFileReaderImpl(new FileInputStream(Configuration.getSASDataFilePath().toString()));
 		// Build the map of column indexes
-		Map<String, Integer> colIndexes = new HashMap<String, Integer>();
+		Map<String, Integer> colIndexes = new HashMap<>();
 		int index = 0;
 		for (Column column : sasFileReader.getColumns()) colIndexes.put(column.getName().toLowerCase(), index++);
 
-		SortedMap<String, Integer> countings = new TreeMap<String, Integer>();
+		SortedMap<String, Integer> countings = new TreeMap<>();
 
 		long linesToRead = sasFileReader.getSasFileProperties().getRowCount();
-		logger.debug("There are " + linesToRead + " lines in " + Configuration.getSASDataFilePath().toString());
+		logger.debug("There are " + linesToRead + " lines in " + Configuration.getSASDataFilePath());
 		for (long line = 0; line < linesToRead; line++) {
 			Object[] values = sasFileReader.readNext();
 			// Equipment identifier is first column + second column
@@ -186,18 +170,18 @@ public class SASUtils {
 	/**
 	 * Aggregates counts of equipments by type according to the first characters of the type.
 	 * 
-	 * @param countings The numbers of equipments of each type (see above).
+	 * @param counts The numbers of equipments of each type (see above).
 	 * @param keyLength The length of the aggregation keys.
 	 * @return A map indexed by aggregation keys, each value being the aggregated number of equipments for this key.
 	 */
-	public static SortedMap<String, Integer> aggregateCountings(Map<String, Integer> countings, int keyLength) {
+	public static SortedMap<String, Integer> aggregateCounts(Map<String, Integer> counts, int keyLength) {
 
-		SortedMap<String, Integer> aggregates = new TreeMap<String, Integer>();
+		SortedMap<String, Integer> aggregates = new TreeMap<>();
 
-		for (String key : countings.keySet()) {
-			String aggegateKey = (keyLength == 0) ? "Total" : key.substring(0, keyLength);
-			aggregates.putIfAbsent(aggegateKey, 0);
-			aggregates.put(aggegateKey, aggregates.get(aggegateKey) + countings.get(key));
+		for (String key : counts.keySet()) {
+			String aggregateKey = (keyLength == 0) ? "Total" : key.substring(0, keyLength);
+			aggregates.putIfAbsent(aggregateKey, 0);
+			aggregates.put(aggregateKey, aggregates.get(aggregateKey) + counts.get(key));
 		}
 
 		return aggregates;
@@ -220,7 +204,7 @@ public class SASUtils {
 		SASModelMaker.logger.info("Number of lines in dataset: " + rowCount);
 		SASModelMaker.logger.info("Character set: " + sasFileProperties.getEncoding());
 	
-		Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(CSV_FILE_NAME)), "UTF-8"));
+		Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(CSV_FILE_NAME), StandardCharsets.UTF_8));
 		CSVDataWriter csvDataWriter = new CSVDataWriterImpl(writer);
 		csvDataWriter.writeColumnNames(sasFileReader.getColumns());
 		int linesToRead = (int) Math.min(rowCount, SASModelMaker.LINES_TO_READ);

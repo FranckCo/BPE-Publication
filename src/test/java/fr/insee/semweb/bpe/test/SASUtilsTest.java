@@ -20,7 +20,7 @@ public class SASUtilsTest {
 		for (String equipmentType : countings.keySet()) {
 			System.out.println(equipmentType + "\t" + countings.get(equipmentType));
 		}
-		countings = SASUtils.aggregateCountings(countings, 2);
+		countings = SASUtils.aggregateCounts(countings, 2);
 		int total = 0;
 		for (String equipmentType : countings.keySet()) {
 			total += countings.get(equipmentType);
