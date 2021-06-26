@@ -33,6 +33,28 @@ public abstract class BPEModelMaker {
 	final static String DEFAULT_FILTER = "E102"; // Will only produce equipment whose type starts with the filter (set to empty for all equipments)
 
 	/**
+	 * Creates a new Jena model and sets the prefix-namespace associations used in the BPE context.
+	 *
+	 * @return The newly created Jena model.
+	 */
+	protected Model initBPEModel() {
+
+		Model bpeModel = ModelFactory.createDefaultModel();
+		bpeModel.setNsPrefix("dcterms", DCTerms.getURI());
+		bpeModel.setNsPrefix("rdfs", RDFS.getURI());
+		bpeModel.setNsPrefix("ibpe", BPEOnto.getURI());
+		bpeModel.setNsPrefix("xsd", XSD.getURI());
+		bpeModel.setNsPrefix("ibpe-eq", Configuration.INSEE_EQUIPMENT_BASE_URI);
+		bpeModel.setNsPrefix("icod-teq", Configuration.INSEE_CODES_BASE_URI + "territoire/typeEquipement/");
+		bpeModel.setNsPrefix("icod-car", Configuration.INSEE_CODES_BASE_URI + "territoire/caractere/");
+		bpeModel.setNsPrefix("icod-sec", Configuration.INSEE_CODES_BASE_URI +  "territoire/secteur/");
+		bpeModel.setNsPrefix("igeo-com", "http://id.insee.fr/geo/commune/");
+		if (Configuration.CREATE_GEOMETRY) bpeModel.setNsPrefix("geo", GeoSPARQL.getURI());
+
+		return bpeModel;
+	}
+
+	/**
 	 * Creates the BPE model with a custom filter on the type of equipments.
 	 * 
 	 * @param typeFilter The filter as a predicate on the equipment type code.

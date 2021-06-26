@@ -38,7 +38,7 @@ public class ContentExplorer {
 	public static void main(String[] args) throws Exception {
 
 		ContentExplorer explorer= new ContentExplorer();
-		PrintStream report = new PrintStream(Configuration.DATA_RESOURCE_PATH.resolve("report.txt").toString());
+		PrintStream report = new PrintStream(Configuration.DATA_RESOURCE_PATH_OUT.resolve("report.txt").toString());
 		for (Configuration.Domain domain : Configuration.Domain.values()) {
 			explorer.exploreArchive(domain, report);
 		}
@@ -47,14 +47,14 @@ public class ContentExplorer {
 
 	public void exploreArchive(Configuration.Domain domain, PrintStream report) {
 
-		Path archivePath = Configuration.DATA_RESOURCE_PATH.resolve("bpe17_" + domain + "_xy_dbase.zip");
+		Path archivePath = Configuration.DATA_RESOURCE_PATH_IN.resolve("bpe17_" + domain + "_xy_dbase.zip");
 		logger.info("Exploring archive " + archivePath);
 
 		// Unzip the archive in the 'resources' directory
 		try (ArchiveInputStream archiveStream = new ArchiveStreamFactory().createArchiveInputStream(ArchiveStreamFactory.ZIP, new BufferedInputStream(new FileInputStream(archivePath.toFile())))) {
 			ArchiveEntry entry = null;
 			while ((entry = archiveStream.getNextEntry()) != null) {
-				Path outputPath = Configuration.DATA_RESOURCE_PATH.resolve(entry.getName()); // We know there are no directories in the BPE archives
+				Path outputPath = Configuration.DATA_RESOURCE_PATH_IN.resolve(entry.getName()); // We know there are no directories in the BPE archives
 				try (OutputStream outputStream = Files.newOutputStream(outputPath)) {
 					IOUtils.copy(archiveStream, outputStream);
 				}

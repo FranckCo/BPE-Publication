@@ -1,15 +1,10 @@
 package fr.insee.semweb.bpe;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.SortedSet;
-import java.util.function.Predicate;
-
+import com.epam.parso.Column;
+import com.epam.parso.SasFileReader;
+import com.epam.parso.impl.SasFileReaderImpl;
+import fr.insee.semweb.bpe.Configuration.Domain;
+import fr.insee.semweb.bpe.Configuration.QualityLevel;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -17,17 +12,14 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.vocabulary.DCTerms;
 import org.apache.jena.vocabulary.RDF;
-import org.apache.jena.vocabulary.RDFS;
-import org.apache.jena.vocabulary.XSD;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.epam.parso.Column;
-import com.epam.parso.SasFileReader;
-import com.epam.parso.impl.SasFileReaderImpl;
-
-import fr.insee.semweb.bpe.Configuration.Domain;
-import fr.insee.semweb.bpe.Configuration.QualityLevel;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * <code>SASModelMaker</code> creates the BPE data and quality Jena models from the SAS database.
@@ -54,7 +46,7 @@ public class SASModelMaker extends BPEModelMaker {
 	public Model makeBPEModel(Predicate<String> typeFilter) throws IOException {
 
 		SasFileReader sasFileReader = new SasFileReaderImpl(new FileInputStream(Configuration.getSASDataFilePath().toString()));
-		// Build the map of column indexes
+		// Build the map of column names to indexes
 		Map<String, Integer> colIndexes = new HashMap<>();
 		int index = 0;
 		for (Column column : sasFileReader.getColumns()) colIndexes.put(column.getName().toLowerCase(), index++);
@@ -62,17 +54,7 @@ public class SASModelMaker extends BPEModelMaker {
 		// Read the list of columns to process for each type of equipment
 		SortedMap<String, SortedSet<String>> featuresAndPropertiesByType = Configuration.listFeaturesAndPropertiesByType();
 
-		Model bpeModel = ModelFactory.createDefaultModel();
-		bpeModel.setNsPrefix("dcterms", DCTerms.getURI());
-		bpeModel.setNsPrefix("rdfs", RDFS.getURI());
-		bpeModel.setNsPrefix("ibpe", BPEOnto.getURI());
-		bpeModel.setNsPrefix("xsd", XSD.getURI());
-		bpeModel.setNsPrefix("ibpe-eq", Configuration.INSEE_EQUIPMENT_BASE_URI);
-		bpeModel.setNsPrefix("icod-teq", Configuration.INSEE_CODES_BASE_URI + "territoire/typeEquipement/");
-		bpeModel.setNsPrefix("icod-car", Configuration.INSEE_CODES_BASE_URI + "territoire/caractere/");
-		bpeModel.setNsPrefix("icod-sec", Configuration.INSEE_CODES_BASE_URI +  "territoire/secteur/");
-		bpeModel.setNsPrefix("igeo-com", "http://id.insee.fr/geo/commune/");
-		if (Configuration.CREATE_GEOMETRY) bpeModel.setNsPrefix("geo", GeoSPARQL.getURI());
+		Model bpeModel = initBPEModel(); // Create an empty model with prefixes needed
 
 		long linesToRead = sasFileReader.getSasFileProperties().getRowCount();
 		if ((LINES_TO_READ > 0) && (LINES_TO_READ < linesToRead)) linesToRead = LINES_TO_READ;
@@ -106,7 +88,7 @@ public class SASModelMaker extends BPEModelMaker {
 			}
 			// Add specialized properties and features for equipments of specific domains
 			SortedSet<String> featuresAndProperties = featuresAndPropertiesByType.get(equipmentType);
-			if (featuresAndProperties != null) { // Would be null if no specialized features or properties for this type
+			if (featuresAndProperties != null) { // Would be null if no specialized features or properties exist for this type
 				for (String column : featuresAndProperties) {
 					if (column == null) continue; // Not specialized
 					Object columnValue = values[colIndexes.get(column)];
@@ -179,6 +161,7 @@ public class SASModelMaker extends BPEModelMaker {
 	 * @return The BPE quality extract as a Jena model.
 	 * @throws IOException In case of problem reading the database.
 	 */
+	@Override
 	public Model makeQualityModel(Predicate<String> typeFilter) throws IOException {
 
 		SasFileReader sasFileReader = new SasFileReaderImpl(new FileInputStream(Configuration.getSASDataFilePath().toString()));

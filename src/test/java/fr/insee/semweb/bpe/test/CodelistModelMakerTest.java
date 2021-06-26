@@ -16,42 +16,42 @@ public class CodelistModelMakerTest {
 	public void testEquipmentTypesCodelist() throws Exception {
 
 		Model codeList = CodelistModelMaker.makeEquipmentTypesCodelistModel(false);
-		codeList.write(new FileWriter("src/main/resources/data/cl-typequ.ttl"), "TTL");
+		codeList.write(new FileWriter(Configuration.DATA_RESOURCE_PATH_OUT.resolve("cl-typequ.ttl").toString()), "TTL");
 	}
 
 	@Test
 	public void testFeaturesCodelist() throws Exception {
 
 		Model codeList = CodelistModelMaker.makeFeaturesCodelistModel();
-		codeList.write(new FileWriter("src/main/resources/data/cl-caract.ttl"), "TTL");
+		codeList.write(new FileWriter(Configuration.DATA_RESOURCE_PATH_OUT.resolve("cl-caract.ttl").toString()), "TTL");
 	}
 
 	@Test
 	public void testSectorsCodelist() throws Exception {
 
 		Model codeList = CodelistModelMaker.makeSectorsCodelistModel();
-		codeList.write(new FileWriter("src/main/resources/data/cl-sect.ttl"), "TTL");
+		codeList.write(new FileWriter(Configuration.DATA_RESOURCE_PATH_OUT.resolve("cl-sect.ttl").toString()), "TTL");
 	}
 
 	@Test
 	public void testQualityLevelsCodelist() throws Exception {
 
 		Model codeList = CodelistModelMaker.makeQualityLevelsCodelistModel();
-		codeList.write(new FileWriter("src/main/resources/data/cl-qual.ttl"), "TTL");
+		codeList.write(new FileWriter(Configuration.DATA_RESOURCE_PATH_OUT.resolve("cl-qual.ttl").toString()), "TTL");
 	}
 
 	@Test
 	public void testAllCodeListsOrdered() throws Exception {
 
-		Path tempFilePath = Configuration.DATA_RESOURCE_PATH.resolve("cl-temp.ttl");
+		Path tempFilePath = Configuration.DATA_RESOURCE_PATH_OUT.resolve("cl-temp.ttl");
 
 		Model codeList = CodelistModelMaker.makeEquipmentTypesCodelistModel(false);
-		Path orderedCodeListPath = Configuration.DATA_RESOURCE_PATH.resolve("cl-typequ-ord.ttl");
+		Path orderedCodeListPath = Configuration.DATA_RESOURCE_PATH_OUT.resolve("cl-typequ-ord.ttl");
 		codeList.write(new FileWriter(tempFilePath.toString()), "TTL");
 		CodelistModelMaker.orderCodeList(tempFilePath, orderedCodeListPath);
 
 		codeList = CodelistModelMaker.makeFeaturesCodelistModel();
-		orderedCodeListPath = Configuration.DATA_RESOURCE_PATH.resolve("cl-caract-ord.ttl");
+		orderedCodeListPath = Configuration.DATA_RESOURCE_PATH_OUT.resolve("cl-caract-ord.ttl");
 		codeList.write(new FileWriter(tempFilePath.toString()), "TTL");
 		CodelistModelMaker.orderCodeList(tempFilePath, orderedCodeListPath);
 
@@ -69,8 +69,8 @@ public class CodelistModelMakerTest {
 	public void testOrderCodeList() throws IOException {
 
 		String codeListName = "cl-typequ";
-		Path codeListPath = Configuration.DATA_RESOURCE_PATH.resolve(codeListName + ".ttl");
-		Path orderedCodeListPath = Configuration.DATA_RESOURCE_PATH.resolve(codeListName + "-ord.ttl");
+		Path codeListPath = Configuration.DATA_RESOURCE_PATH_OUT.resolve(codeListName + ".ttl");
+		Path orderedCodeListPath = Configuration.DATA_RESOURCE_PATH_OUT.resolve(codeListName + "-ord.ttl");
 		CodelistModelMaker.orderCodeList(codeListPath, orderedCodeListPath);
 	}
 

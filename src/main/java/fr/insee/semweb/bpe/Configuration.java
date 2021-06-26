@@ -22,8 +22,10 @@ public class Configuration {
 	public static final boolean QUALITY_ANNOTATIONS = true; // Create DQV quality annotations
 	public static final boolean BETA_NAMING = true; // Creates URI in a 'beta' namespace
 
-	/** Input data will be read in this folder, and all files created will be put here */
-	public static final Path DATA_RESOURCE_PATH = Paths.get("src/main/resources/data");
+	/** Input data will be read in this folder */
+	public static final Path DATA_RESOURCE_PATH_IN = Paths.get("src/main/resources/data/in");
+	/** Output data will be created in this folder */
+	public static final Path DATA_RESOURCE_PATH_OUT = Paths.get("src/main/resources/data/out");
 	/** Text configuration files (lists of features, equipment lists...) should be in this folder */
 	public static final Path CONF_RESOURCE_PATH = Paths.get("src/main/resources/conf");
 
@@ -59,28 +61,28 @@ public class Configuration {
 	public static Map<Path, Boolean> getDBFFilePaths(Domain domain) {
 
 		Map<Path, Boolean> paths = new HashMap<>();
-		paths.put(DATA_RESOURCE_PATH.resolve("bpe_" + domain + "_xy.dbf"), true); // sampled
-		paths.put(DATA_RESOURCE_PATH.resolve("varlist_" + domain + "_xy.dbf"), false);
-		paths.put(DATA_RESOURCE_PATH.resolve("varmod_" + domain + "_xy.dbf"), false);
+		paths.put(DATA_RESOURCE_PATH_IN.resolve("bpe_" + domain + "_xy.dbf"), true); // sampled
+		paths.put(DATA_RESOURCE_PATH_IN.resolve("varlist_" + domain + "_xy.dbf"), false);
+		paths.put(DATA_RESOURCE_PATH_IN.resolve("varmod_" + domain + "_xy.dbf"), false);
 
 		return paths;
 	}
 
 	/** Path of the dBase file containing the equipment types for a given domain */
 	public static Path getBDFTypesCodelistFilePath(Domain domain) {
-		return DATA_RESOURCE_PATH.resolve("varmod_" + domain.toString() + "_xy.dbf");
+		return DATA_RESOURCE_PATH_IN.resolve("varmod_" + domain.toString() + "_xy.dbf");
 	}
 
 	/** Path of the dBase file containing the equipment list for a given domain */
 	public static Path getDBFDataFilePath(Domain domain) {
-		return DATA_RESOURCE_PATH.resolve("bpe_" + domain.toString() + "_xy.dbf");
+		return DATA_RESOURCE_PATH_IN.resolve("bpe_" + domain.toString() + "_xy.dbf");
 	}
 
 	// SAS files
 
 	/** Path of the SAS file containing the data */
 	public static Path getSASDataFilePath() {
-		return DATA_RESOURCE_PATH.resolve("detail_diffxy_internet.sas7bdat");
+		return DATA_RESOURCE_PATH_IN.resolve("detail_diffxy_internet.sas7bdat");
 	}
 
 	/** Names of the SAS variables corresponding to the main features in the different domains */
